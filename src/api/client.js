@@ -21,6 +21,7 @@ export const unfAPI = {
   getElement: (id) => apiClient.get(`/unf/elements/${id}`),
   createElement: (data) => apiClient.post('/unf/elements', data),
   updateElement: (id, data) => apiClient.put(`/unf/elements/${id}`, data),
+  approveElement: (id) => apiClient.post(`/unf/elements/${id}/approve`),
   getElementVersions: (id) => apiClient.get(`/unf/elements/${id}/versions`),
   getLatestApprovedElements: (layerId) =>
     apiClient.get('/unf/elements/latest/approved', { params: { layer_id: layerId } }),
