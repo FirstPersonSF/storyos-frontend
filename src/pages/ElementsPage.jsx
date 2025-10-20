@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { unfAPI } from '../api/client';
 
 export default function ElementsPage() {
@@ -95,6 +96,7 @@ export default function ElementsPage() {
   if (error) return <div className="text-red-600 py-8">Error: {error}</div>;
 
   return (
+    <>
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold text-gray-900">UNF Elements</h1>
@@ -155,10 +157,29 @@ export default function ElementsPage() {
         ))}
       </div>
 
+    </div>
+
       {/* Create/Edit Modal */}
-      {showCreateModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg max-w-2xl w-full p-6">
+      {showCreateModal && createPortal((
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.8)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 99999
+        }}>
+          <div style={{
+            backgroundColor: 'white',
+            padding: '2rem',
+            borderRadius: '8px',
+            maxWidth: '600px',
+            width: '100%'
+          }}>
             <h2 className="text-2xl font-bold mb-4">
               {editingElement ? `Edit: ${editingElement.name}` : 'Create New Element'}
             </h2>
@@ -237,7 +258,7 @@ export default function ElementsPage() {
             </form>
           </div>
         </div>
-      )}
-    </div>
+      ), document.body)}
+    </>
   );
 }
