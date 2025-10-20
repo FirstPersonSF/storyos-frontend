@@ -141,16 +141,46 @@ export default function HomePage() {
         </div>
       </div>
 
-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-        <h2 className="text-lg font-semibold text-blue-900 mb-2">
-          Quick Start
+      <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
+        <h2 className="text-xl font-semibold text-blue-900 mb-3">
+          How StoryOS Works
         </h2>
-        <ul className="list-disc list-inside space-y-1 text-blue-800">
-          <li>View and manage UNF Elements (reusable content)</li>
-          <li>Create Deliverables from Templates</li>
-          <li>Track version changes and impact alerts</li>
-          <li>Apply Brand Voice filters at render time</li>
-        </ul>
+        <div className="space-y-3 text-blue-900">
+          <div className="flex gap-3">
+            <div className="flex-shrink-0 w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold">1</div>
+            <div>
+              <strong>Create Reusable Elements</strong>
+              <p className="text-sm text-blue-800 mt-1">Build a library of approved content blocks (mission statements, product features, etc.) organized by UNF layers.</p>
+            </div>
+          </div>
+          <div className="flex gap-3">
+            <div className="flex-shrink-0 w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold">2</div>
+            <div>
+              <strong>Assemble Deliverables</strong>
+              <p className="text-sm text-blue-800 mt-1">Combine elements with templates and brand voices to create blog posts, marketing materials, and other content.</p>
+            </div>
+          </div>
+          <div className="flex gap-3">
+            <div className="flex-shrink-0 w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold">3</div>
+            <div>
+              <strong>Track Version Changes</strong>
+              <p className="text-sm text-blue-800 mt-1">When you update an element, all deliverables using it get alerts showing old → new version changes.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="bg-amber-50 border border-amber-200 rounded-lg p-6">
+        <h2 className="text-lg font-semibold text-amber-900 mb-2">
+          Try the Demo Workflow
+        </h2>
+        <ol className="list-decimal list-inside space-y-2 text-amber-900">
+          <li>Go to <strong>UNF Elements</strong> and create a new element (or edit an existing one)</li>
+          <li>Approve the element if it's a draft</li>
+          <li>Go to <strong>Deliverables</strong> and create a deliverable using your elements</li>
+          <li>Go back to <strong>UNF Elements</strong> and edit one of the elements you used</li>
+          <li>Return to <strong>Deliverables</strong> and click "Check for Updates" to see the impact alert!</li>
+        </ol>
       </div>
     </div>
   );

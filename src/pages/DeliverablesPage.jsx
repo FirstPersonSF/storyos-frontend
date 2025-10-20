@@ -1,15 +1,29 @@
 import { useState, useEffect } from 'react';
-import { deliverablesAPI } from '../api/client';
+import { deliverablesAPI, templatesAPI, unfAPI, voicesAPI } from '../api/client';
 
 export default function DeliverablesPage() {
   const [deliverables, setDeliverables] = useState([]);
+  const [templates, setTemplates] = useState([]);
+  const [elements, setElements] = useState([]);
+  const [voices, setVoices] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [selectedDeliverable, setSelectedDeliverable] = useState(null);
   const [alerts, setAlerts] = useState(null);
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [formData, setFormData] = useState({
+    name: '',
+    template_id: '',
+    voice_id: '',
+    instance_data: {},
+    selected_elements: []
+  });
 
   useEffect(() => {
     loadDeliverables();
+    loadTemplates();
+    loadElements();
+    loadVoices();
   }, []);
 
   const loadDeliverables = async () => {
@@ -25,6 +39,34 @@ export default function DeliverablesPage() {
     }
   };
 
+  const loadTemplates = async () => {
+    try {
+      const response = await templatesAPI.getTemplates();
+      setTemplates(response.data);
+    } catch (err) {
+      console.error('Error loading templates:', err);
+    }
+  };
+
+  const loadElements = async () => {
+    try {
+      const response = await unfAPI.getElements();
+      // Only show approved elements
+      setElements(response.data.filter(e => e.status === 'approved'));
+    } catch (err) {
+      console.error('Error loading elements:', err);
+    }
+  };
+
+  const loadVoices = async () => {
+    try {
+      const response = await voicesAPI.getVoices();
+      setVoices(response.data);
+    } catch (err) {
+      console.error('Error loading voices:', err);
+    }
+  };
+
   const loadDeliverableWithAlerts = async (id) => {
     try {
       const response = await deliverablesAPI.getDeliverableWithAlerts(id);
@@ -35,6 +77,53 @@ export default function DeliverablesPage() {
     }
   };
 
+  const handleCreate = () => {
+    setFormData({
+      name: '',
+      template_id: '',
+      voice_id: '',
+      instance_data: {},
+      selected_elements: []
+    });
+    setShowCreateModal(true);
+  };
+
+  const toggleElement = (elementId) => {
+    setFormData(prev => ({
+      ...prev,
+      selected_elements: prev.selected_elements.includes(elementId)
+        ? prev.selected_elements.filter(id => id !== elementId)
+        : [...prev.selected_elements, elementId]
+    }));
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      // Build element_versions mapping
+      const element_versions = {};
+      formData.selected_elements.forEach(elementId => {
+        const element = elements.find(e => e.id === elementId);
+        if (element) {
+          element_versions[elementId] = element.version;
+        }
+      });
+
+      await deliverablesAPI.createDeliverable({
+        name: formData.name,
+        template_id: formData.template_id,
+        voice_id: formData.voice_id,
+        instance_data: formData.instance_data,
+        element_versions
+      });
+
+      setShowCreateModal(false);
+      loadDeliverables();
+    } catch (err) {
+      alert('Error creating deliverable: ' + err.message);
+    }
+  };
+
   if (loading) return <div className="text-center py-8">Loading...</div>;
   if (error) return <div className="text-red-600 py-8">Error: {error}</div>;
 
@@ -42,7 +131,15 @@ export default function DeliverablesPage() {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-3xl font-bold text-gray-900">Deliverables</h1>
-        <span className="text-sm text-gray-500">{deliverables.length} deliverables</span>
+        <div className="flex items-center gap-4">
+          <span className="text-sm text-gray-500">{deliverables.length} deliverables</span>
+          <button
+            onClick={handleCreate}
+            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+          >
+            + Create Deliverable
+          </button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 gap-4">
@@ -119,6 +216,120 @@ export default function DeliverablesPage() {
           </div>
         ))}
       </div>
+
+      {/* Create Modal */}
+      {showCreateModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg max-w-3xl w-full max-h-[90vh] overflow-y-auto p-6">
+            <h2 className="text-2xl font-bold mb-4">Create New Deliverable</h2>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Deliverable Name
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="e.g., Q4 Product Launch Blog Post"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Template
+                  </label>
+                  <select
+                    required
+                    value={formData.template_id}
+                    onChange={(e) => setFormData({ ...formData, template_id: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="">Select template...</option>
+                    {templates.map((template) => (
+                      <option key={template.id} value={template.id}>
+                        {template.name} (v{template.version})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Brand Voice
+                  </label>
+                  <select
+                    required
+                    value={formData.voice_id}
+                    onChange={(e) => setFormData({ ...formData, voice_id: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="">Select voice...</option>
+                    {voices.map((voice) => (
+                      <option key={voice.id} value={voice.id}>
+                        {voice.name} (v{voice.version})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Select Elements to Include
+                </label>
+                <div className="border border-gray-300 rounded-lg p-4 max-h-60 overflow-y-auto">
+                  {elements.length === 0 ? (
+                    <p className="text-gray-500 text-sm">No approved elements available</p>
+                  ) : (
+                    <div className="space-y-2">
+                      {elements.map((element) => (
+                        <label
+                          key={element.id}
+                          className="flex items-start gap-3 p-2 hover:bg-gray-50 rounded cursor-pointer"
+                        >
+                          <input
+                            type="checkbox"
+                            checked={formData.selected_elements.includes(element.id)}
+                            onChange={() => toggleElement(element.id)}
+                            className="mt-1"
+                          />
+                          <div className="flex-1">
+                            <div className="font-medium text-sm">{element.name}</div>
+                            <div className="text-xs text-gray-500">v{element.version} - {element.content.substring(0, 60)}...</div>
+                          </div>
+                        </label>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                <p className="text-xs text-gray-500 mt-1">
+                  {formData.selected_elements.length} element(s) selected
+                </p>
+              </div>
+
+              <div className="flex gap-3 justify-end pt-4 border-t">
+                <button
+                  type="button"
+                  onClick={() => setShowCreateModal(false)}
+                  className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                >
+                  Create Deliverable
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
