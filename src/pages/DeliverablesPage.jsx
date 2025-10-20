@@ -129,6 +129,8 @@ export default function DeliverablesPage() {
   if (loading) return <div className="text-center py-8">Loading...</div>;
   if (error) return <div className="text-red-600 py-8">Error: {error}</div>;
 
+  console.log('Rendering DeliverablesPage - viewingContent:', viewingContent);
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -184,7 +186,10 @@ export default function DeliverablesPage() {
 
             <div className="flex gap-2 mt-2">
               <button
-                onClick={() => setViewingContent(deliverable)}
+                onClick={() => {
+                  console.log('View Content clicked, deliverable:', deliverable);
+                  setViewingContent(deliverable);
+                }}
                 className="flex-1 px-4 py-2 bg-green-600 text-white text-sm rounded hover:bg-green-700"
               >
                 View Content
