@@ -11,6 +11,7 @@ export default function DeliverablesPage() {
   const [error, setError] = useState(null);
   const [selectedDeliverable, setSelectedDeliverable] = useState(null);
   const [alerts, setAlerts] = useState(null);
+  const [viewingContent, setViewingContent] = useState(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
@@ -181,12 +182,20 @@ export default function DeliverablesPage() {
               </div>
             )}
 
-            <button
-              onClick={() => loadDeliverableWithAlerts(deliverable.id)}
-              className="mt-2 px-4 py-2 bg-blue-600 text-white text-sm rounded hover:bg-blue-700"
-            >
-              Check for Updates
-            </button>
+            <div className="flex gap-2 mt-2">
+              <button
+                onClick={() => setViewingContent(deliverable)}
+                className="flex-1 px-4 py-2 bg-green-600 text-white text-sm rounded hover:bg-green-700"
+              >
+                View Content
+              </button>
+              <button
+                onClick={() => loadDeliverableWithAlerts(deliverable.id)}
+                className="flex-1 px-4 py-2 bg-blue-600 text-white text-sm rounded hover:bg-blue-700"
+              >
+                Check for Updates
+              </button>
+            </div>
 
             {selectedDeliverable?.id === deliverable.id && (
               <div className="mt-4 p-4 border-t">
@@ -328,6 +337,55 @@ export default function DeliverablesPage() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      ), document.body)}
+
+      {/* View Content Modal */}
+      {viewingContent && createPortal((
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto p-6">
+            <div className="flex justify-between items-start mb-4">
+              <h2 className="text-2xl font-bold">{viewingContent.name}</h2>
+              <button
+                onClick={() => setViewingContent(null)}
+                className="text-gray-500 hover:text-gray-700 text-2xl"
+              >
+                ×
+              </button>
+            </div>
+
+            <div className="mb-4 p-3 bg-gray-50 rounded">
+              <p className="text-sm text-gray-600">
+                Template: <strong>{viewingContent.template_version}</strong> |
+                Voice: <strong>{viewingContent.voice_version}</strong> |
+                Status: <strong className="capitalize">{viewingContent.status}</strong>
+              </p>
+            </div>
+
+            {viewingContent.rendered_content && Object.keys(viewingContent.rendered_content).length > 0 ? (
+              <div className="space-y-4">
+                {Object.entries(viewingContent.rendered_content).map(([section, content]) => (
+                  <div key={section} className="border-b pb-4">
+                    <h3 className="text-lg font-semibold text-blue-600 mb-2">{section}</h3>
+                    <div className="text-gray-700 whitespace-pre-wrap">{content}</div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-gray-500 text-center py-8">
+                No rendered content available
+              </div>
+            )}
+
+            <div className="mt-6 flex justify-end">
+              <button
+                onClick={() => setViewingContent(null)}
+                className="px-4 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300"
+              >
+                Close
+              </button>
+            </div>
           </div>
         </div>
       ), document.body)}
