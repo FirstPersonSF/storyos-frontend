@@ -207,7 +207,7 @@ export default function DeliverablesPage() {
                 {alerts && alerts.length > 0 ? (
                   <div className="space-y-2">
                     <div className="flex items-center text-amber-600">
-                      <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                      <svg className="w-5 h-5 mr-2 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20" style={{ minWidth: '1.25rem', minHeight: '1.25rem', maxWidth: '1.25rem', maxHeight: '1.25rem' }}>
                         <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
                       </svg>
                       <strong>{alerts.length} Update{alerts.length !== 1 ? 's' : ''} Available</strong>
@@ -220,7 +220,7 @@ export default function DeliverablesPage() {
                   </div>
                 ) : (
                   <div className="text-green-600 flex items-center">
-                    <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                    <svg className="w-5 h-5 mr-2 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20" style={{ minWidth: '1.25rem', minHeight: '1.25rem', maxWidth: '1.25rem', maxHeight: '1.25rem' }}>
                       <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                     </svg>
                     <span>Up to date</span>
@@ -234,8 +234,28 @@ export default function DeliverablesPage() {
 
       {/* Create Modal */}
       {showCreateModal && createPortal((
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg max-w-3xl w-full max-h-[90vh] overflow-y-auto p-6">
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: '1rem',
+          zIndex: 99999
+        }}>
+          <div style={{
+            backgroundColor: 'white',
+            borderRadius: '8px',
+            maxWidth: '48rem',
+            width: '100%',
+            maxHeight: '90vh',
+            overflowY: 'auto',
+            padding: '1.5rem'
+          }}>
             <h2 className="text-2xl font-bold mb-4">Create New Deliverable</h2>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
