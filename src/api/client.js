@@ -62,6 +62,7 @@ export const deliverablesAPI = {
   createDeliverable: (data) => apiClient.post('/deliverables', data),
   updateDeliverable: (id, data) => apiClient.put(`/deliverables/${id}`, data),
   validateDeliverable: (id) => apiClient.post(`/deliverables/${id}/validate`),
+  refreshDeliverable: (id) => apiClient.post(`/deliverables/${id}/refresh`),
 };
 
 export default apiClient;

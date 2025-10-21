@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import api from '../api/client';
+import { unfAPI, voicesAPI, templatesAPI, deliverablesAPI } from '../api/client';
 
 export default function DemoPage() {
   const [loading, setLoading] = useState(false);
@@ -18,8 +18,8 @@ export default function DemoPage() {
 
   const loadVoices = async () => {
     try {
-      const data = await api.getVoices();
-      setVoices(data);
+      const response = await voicesAPI.getVoices();
+      setVoices(response.data);
     } catch (error) {
       console.error('Failed to load voices:', error);
     }
@@ -27,8 +27,8 @@ export default function DemoPage() {
 
   const loadElements = async () => {
     try {
-      const data = await api.getElements();
-      setElements(data.filter(e => e.status === 'approved'));
+      const response = await unfAPI.getElements();
+      setElements(response.data.filter(e => e.status === 'approved'));
     } catch (error) {
       console.error('Failed to load elements:', error);
     }
@@ -44,8 +44,8 @@ export default function DemoPage() {
       const productVoice = voices.find(v => v.name.includes('Product'));
 
       // Get Brand Manifesto template
-      const templates = await api.getTemplates();
-      const manifestoTemplate = templates.find(t => t.name.includes('Brand Manifesto'));
+      const templatesResponse = await templatesAPI.getTemplates();
+      const manifestoTemplate = templatesResponse.data.find(t => t.name.includes('Brand Manifesto'));
 
       if (!corporateVoice || !productVoice || !manifestoTemplate) {
         alert('Missing required data. Please ensure Corporate Voice, Product Voice, and Brand Manifesto template exist.');
@@ -54,24 +54,24 @@ export default function DemoPage() {
       }
 
       // Create Corporate Voice deliverable
-      const corpResponse = await api.createDeliverable({
+      const corpResponse = await deliverablesAPI.createDeliverable({
         name: 'Demo: Corporate Voice Brand Manifesto',
         template_id: manifestoTemplate.id,
         voice_id: corporateVoice.id,
         instance_data: {},
         status: 'draft'
       });
-      setCorporateDeliverable(corpResponse);
+      setCorporateDeliverable(corpResponse.data);
 
       // Create Product Voice deliverable
-      const prodResponse = await api.createDeliverable({
+      const prodResponse = await deliverablesAPI.createDeliverable({
         name: 'Demo: Product Voice Brand Manifesto',
         template_id: manifestoTemplate.id,
         voice_id: productVoice.id,
         instance_data: {},
         status: 'draft'
       });
-      setProductDeliverable(prodResponse);
+      setProductDeliverable(prodResponse.data);
 
     } catch (error) {
       console.error('Failed to run demo:', error);
@@ -94,7 +94,7 @@ export default function DemoPage() {
       // Update the element content
       const updatedContent = selectedElement.content + '\n\n[UPDATED: ' + new Date().toLocaleTimeString() + ']';
 
-      await api.updateElement(selectedElement.id, {
+      await unfAPI.updateElement(selectedElement.id, {
         content: updatedContent
       });
 
@@ -103,12 +103,12 @@ export default function DemoPage() {
 
       // Reload deliverables to show impact alerts
       if (corporateDeliverable) {
-        const refreshed = await api.getDeliverable(corporateDeliverable.id);
-        setCorporateDeliverable(refreshed);
+        const refreshed = await deliverablesAPI.getDeliverable(corporateDeliverable.id);
+        setCorporateDeliverable(refreshed.data);
       }
       if (productDeliverable) {
-        const refreshed = await api.getDeliverable(productDeliverable.id);
-        setProductDeliverable(refreshed);
+        const refreshed = await deliverablesAPI.getDeliverable(productDeliverable.id);
+        setProductDeliverable(refreshed.data);
       }
 
       setDemoStep('alerts');
@@ -126,14 +126,14 @@ export default function DemoPage() {
 
     try {
       if (corporateDeliverable) {
-        await api.refreshDeliverable(corporateDeliverable.id);
-        const refreshed = await api.getDeliverable(corporateDeliverable.id);
-        setCorporateDeliverable(refreshed);
+        await deliverablesAPI.refreshDeliverable(corporateDeliverable.id);
+        const refreshed = await deliverablesAPI.getDeliverable(corporateDeliverable.id);
+        setCorporateDeliverable(refreshed.data);
       }
       if (productDeliverable) {
-        await api.refreshDeliverable(productDeliverable.id);
-        const refreshed = await api.getDeliverable(productDeliverable.id);
-        setProductDeliverable(refreshed);
+        await deliverablesAPI.refreshDeliverable(productDeliverable.id);
+        const refreshed = await deliverablesAPI.getDeliverable(productDeliverable.id);
+        setProductDeliverable(refreshed.data);
       }
 
       alert('Deliverables refreshed! Impact alerts should now be cleared.');
