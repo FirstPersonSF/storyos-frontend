@@ -2,6 +2,7 @@ import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
 import ElementsPage from './pages/ElementsPage';
 import DeliverablesPage from './pages/DeliverablesPage';
 import HomePage from './pages/HomePage';
+import DemoPage from './pages/DemoPage';
 import './App.css';
 
 function App() {
@@ -35,6 +36,12 @@ function App() {
                   >
                     Deliverables
                   </Link>
+                  <Link
+                    to="/demo"
+                    className="border-transparent text-blue-500 hover:border-blue-300 hover:text-blue-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium"
+                  >
+                    🎬 Demo
+                  </Link>
                 </div>
               </div>
               <div className="flex items-center">
@@ -50,6 +57,7 @@ function App() {
             <Route path="/" element={<HomePage />} />
             <Route path="/elements" element={<ElementsPage />} />
             <Route path="/deliverables" element={<DeliverablesPage />} />
+            <Route path="/demo" element={<DemoPage />} />
           </Routes>
         </main>
       </div>
