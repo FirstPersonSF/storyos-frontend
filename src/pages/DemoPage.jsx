@@ -103,11 +103,11 @@ export default function DemoPage() {
 
       // Reload deliverables to show impact alerts
       if (corporateDeliverable) {
-        const refreshed = await deliverablesAPI.getDeliverable(corporateDeliverable.id);
+        const refreshed = await deliverablesAPI.getDeliverableWithAlerts(corporateDeliverable.id);
         setCorporateDeliverable(refreshed.data);
       }
       if (productDeliverable) {
-        const refreshed = await deliverablesAPI.getDeliverable(productDeliverable.id);
+        const refreshed = await deliverablesAPI.getDeliverableWithAlerts(productDeliverable.id);
         setProductDeliverable(refreshed.data);
       }
 
@@ -127,12 +127,12 @@ export default function DemoPage() {
     try {
       if (corporateDeliverable) {
         await deliverablesAPI.refreshDeliverable(corporateDeliverable.id);
-        const refreshed = await deliverablesAPI.getDeliverable(corporateDeliverable.id);
+        const refreshed = await deliverablesAPI.getDeliverableWithAlerts(corporateDeliverable.id);
         setCorporateDeliverable(refreshed.data);
       }
       if (productDeliverable) {
         await deliverablesAPI.refreshDeliverable(productDeliverable.id);
-        const refreshed = await deliverablesAPI.getDeliverable(productDeliverable.id);
+        const refreshed = await deliverablesAPI.getDeliverableWithAlerts(productDeliverable.id);
         setProductDeliverable(refreshed.data);
       }
 
@@ -295,15 +295,17 @@ export default function DemoPage() {
                 </div>
 
                 {/* Impact Alerts - Corporate */}
-                {corporateDeliverable?.impact_alerts && Object.keys(corporateDeliverable.impact_alerts).length > 0 && (
+                {corporateDeliverable?.alerts && corporateDeliverable.alerts.length > 0 && (
                   <div className="mt-3 p-3 bg-yellow-50 border border-yellow-300 rounded-lg">
                     <div className="flex items-start gap-2">
                       <span className="text-yellow-600 text-xl">⚠️</span>
                       <div className="flex-1">
                         <h4 className="font-semibold text-sm text-yellow-800">Impact Alerts</h4>
                         <ul className="text-xs text-yellow-700 mt-1 space-y-1">
-                          {Object.entries(corporateDeliverable.impact_alerts).map(([elem, alert]) => (
-                            <li key={elem}>• {elem}: {alert}</li>
+                          {corporateDeliverable.alerts.map((alert) => (
+                            <li key={alert.element_id}>
+                              • {alert.element_name}: v{alert.old_version} → v{alert.new_version} ({alert.status})
+                            </li>
                           ))}
                         </ul>
                       </div>
@@ -336,15 +338,17 @@ export default function DemoPage() {
                 </div>
 
                 {/* Impact Alerts - Product */}
-                {productDeliverable?.impact_alerts && Object.keys(productDeliverable.impact_alerts).length > 0 && (
+                {productDeliverable?.alerts && productDeliverable.alerts.length > 0 && (
                   <div className="mt-3 p-3 bg-yellow-50 border border-yellow-300 rounded-lg">
                     <div className="flex items-start gap-2">
                       <span className="text-yellow-600 text-xl">⚠️</span>
                       <div className="flex-1">
                         <h4 className="font-semibold text-sm text-yellow-800">Impact Alerts</h4>
                         <ul className="text-xs text-yellow-700 mt-1 space-y-1">
-                          {Object.entries(productDeliverable.impact_alerts).map(([elem, alert]) => (
-                            <li key={elem}>• {elem}: {alert}</li>
+                          {productDeliverable.alerts.map((alert) => (
+                            <li key={alert.element_id}>
+                              • {alert.element_name}: v{alert.old_version} → v{alert.new_version} ({alert.status})
+                            </li>
                           ))}
                         </ul>
                       </div>
