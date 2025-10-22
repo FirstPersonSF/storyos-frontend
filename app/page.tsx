@@ -1,103 +1,200 @@
-import Image from "next/image";
+import { Button } from "@/components/ui/button"
+import { Card, CardContent } from "@/components/ui/card"
+import { FileText, Clipboard, Play, Code2, ArrowRight } from "lucide-react"
+import Link from "next/link"
 
-export default function Home() {
+export default function StoryOSDashboard() {
   return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm/6 text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-[family-name:var(--font-geist-mono)] font-semibold">
-              app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
-
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+    <div className="min-h-screen bg-background">
+      {/* Header */}
+      <header className="border-b border-border bg-white">
+        <div className="mx-auto max-w-7xl px-6 py-4 lg:px-8">
+          <div className="flex items-center justify-between">
+            <h1 className="text-2xl font-bold tracking-tight text-[#003A70]">StoryOS</h1>
+            <span className="text-sm text-muted-foreground">v1.0.0</span>
+          </div>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
+      </header>
+
+      {/* Hero Section - Try the Demo Workflow */}
+      <section className="bg-gradient-to-b from-white to-secondary/30 py-16 lg:py-24">
+        <div className="mx-auto max-w-7xl px-6 lg:px-8">
+          <div className="mx-auto max-w-3xl text-center">
+            <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-accent/10 px-4 py-2 text-sm font-medium text-[#003A70]">
+              <Play className="h-4 w-4" />
+              Interactive Demo
+            </div>
+            <h2 className="mb-6 text-balance text-4xl font-bold tracking-tight text-foreground lg:text-6xl">
+              Welcome to StoryOS
+            </h2>
+            <p className="mb-8 text-pretty text-lg text-muted-foreground lg:text-xl">
+              Content management system for enterprise storytelling
+            </p>
+            <Button size="lg" className="h-12 bg-[#003A70] px-8 text-base font-semibold hover:bg-[#0052A3]">
+              Start Demo Workflow
+              <ArrowRight className="ml-2 h-5 w-5" />
+            </Button>
+          </div>
+
+          {/* Demo Workflow Steps */}
+          <div className="mt-16">
+            <Card className="border-2 border-[#003A70]/10 bg-white shadow-lg">
+              <CardContent className="p-8 lg:p-12">
+                <h3 className="mb-8 text-center text-2xl font-bold text-foreground lg:text-3xl">
+                  Try the Demo Workflow
+                </h3>
+                <div className="grid gap-6 lg:grid-cols-5">
+                  {[
+                    {
+                      step: 1,
+                      text: "Go to UNF Elements and create a new element (or edit an existing one)",
+                      color: "#E92076",
+                    },
+                    { step: 2, text: "Approve the element if it's a draft", color: "#EF5898" },
+                    {
+                      step: 3,
+                      text: "Go to Deliverables and create a deliverable using your elements",
+                      color: "#4098D7",
+                    },
+                    {
+                      step: 4,
+                      text: "Go back to UNF Elements and edit one of the elements you used",
+                      color: "#2069A3",
+                    },
+                    {
+                      step: 5,
+                      text: 'Return to Deliverables and click "Check for Updates" to see the impact alert!',
+                      color: "#003A70",
+                    },
+                  ].map((item) => (
+                    <div key={item.step} className="flex flex-col">
+                      <div
+                        className="mb-3 flex h-10 w-10 items-center justify-center rounded-full text-lg font-bold text-white"
+                        style={{ backgroundColor: item.color }}
+                      >
+                        {item.step}
+                      </div>
+                      <p className="text-sm leading-relaxed text-foreground">{item.text}</p>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </section>
+
+      {/* Platform Features */}
+      <section className="py-16 lg:py-24">
+        <div className="mx-auto max-w-7xl px-6 lg:px-8">
+          <div className="mb-12 text-center">
+            <h3 className="mb-4 text-3xl font-bold tracking-tight text-foreground lg:text-4xl">Platform Features</h3>
+            <p className="text-lg text-muted-foreground">Explore the core capabilities of StoryOS</p>
+          </div>
+
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+            {[
+              {
+                icon: FileText,
+                title: "UNF Elements",
+                description: "Reusable content blocks",
+                detail: "Build a library of approved content blocks organized by UNF layers.",
+                href: "/elements",
+              },
+              {
+                icon: Clipboard,
+                title: "Deliverables",
+                description: "Final outputs with alerts",
+                detail: "Combine elements with templates and brand voices to create content.",
+              },
+              {
+                icon: Play,
+                title: "Interactive Demo",
+                description: "Try it live",
+                detail: "Experience the full workflow in action with our interactive demo.",
+                href: "/demo",
+              },
+              {
+                icon: Code2,
+                title: "API Documentation",
+                description: "REST API docs",
+                detail: "Integrate StoryOS into your existing tools and workflows.",
+              },
+            ].map((feature, index) => {
+              const CardWrapper = feature.href ? Link : "div"
+              const cardProps = feature.href ? { href: feature.href } : {}
+
+              return (
+                <CardWrapper key={index} {...cardProps}>
+                  <Card className="group transition-all hover:border-[#003A70]/30 hover:shadow-md hover:cursor-pointer">
+                    <CardContent className="p-6">
+                      <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-[#003A70]/10 text-[#003A70] transition-colors group-hover:bg-[#003A70] group-hover:text-white">
+                        <feature.icon className="h-6 w-6" />
+                      </div>
+                      <h4 className="mb-2 text-xl font-bold text-foreground">{feature.title}</h4>
+                      <p className="mb-3 text-sm font-medium text-[#003A70]">{feature.description}</p>
+                      <p className="text-sm leading-relaxed text-muted-foreground">{feature.detail}</p>
+                    </CardContent>
+                  </Card>
+                </CardWrapper>
+              )
+            })}
+          </div>
+        </div>
+      </section>
+
+      {/* How StoryOS Works */}
+      <section className="bg-secondary/30 py-16 lg:py-24">
+        <div className="mx-auto max-w-7xl px-6 lg:px-8">
+          <div className="mb-12 text-center">
+            <h3 className="mb-4 text-3xl font-bold tracking-tight text-foreground lg:text-4xl">How StoryOS Works</h3>
+          </div>
+
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+            {[
+              {
+                number: 1,
+                title: "Create Reusable Elements",
+                description: "Build a library of approved content blocks organized by UNF layers.",
+              },
+              {
+                number: 2,
+                title: "Assemble Deliverables",
+                description: "Combine elements with templates and brand voices to create content.",
+              },
+              {
+                number: 3,
+                title: "Track Version Changes",
+                description: "Get alerts when elements update showing old → new version changes.",
+              },
+              {
+                number: 4,
+                title: "Voice Transformations",
+                description: "Apply brand voices to transform content automatically.",
+              },
+            ].map((step) => (
+              <Card key={step.number} className="bg-white">
+                <CardContent className="p-6">
+                  <div className="mb-4 inline-flex h-8 items-center justify-center rounded bg-[#003A70] px-3 text-sm font-bold text-white">
+                    Step {step.number}
+                  </div>
+                  <h4 className="mb-3 text-xl font-bold text-foreground">{step.title}</h4>
+                  <p className="text-sm leading-relaxed text-muted-foreground">{step.description}</p>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer className="border-t border-border bg-white py-8">
+        <div className="mx-auto max-w-7xl px-6 lg:px-8">
+          <p className="text-center text-sm text-muted-foreground">
+            © 2025 StoryOS. Content management for enterprise storytelling.
+          </p>
+        </div>
       </footer>
     </div>
-  );
+  )
 }
