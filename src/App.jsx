@@ -3,6 +3,7 @@ import ElementsPage from './pages/ElementsPage';
 import DeliverablesPage from './pages/DeliverablesPage';
 import HomePage from './pages/HomePage';
 import DemoPage from './pages/DemoPage';
+import { DemoProvider } from './context/DemoContext';
 import './App.css';
 
 function App() {
@@ -57,7 +58,11 @@ function App() {
             <Route path="/" element={<HomePage />} />
             <Route path="/elements" element={<ElementsPage />} />
             <Route path="/deliverables" element={<DeliverablesPage />} />
-            <Route path="/demo" element={<DemoPage />} />
+            <Route path="/demo" element={
+              <DemoProvider>
+                <DemoPage />
+              </DemoProvider>
+            } />
           </Routes>
         </main>
       </div>
