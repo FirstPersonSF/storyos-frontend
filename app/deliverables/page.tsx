@@ -8,6 +8,7 @@ import { useState } from "react"
 export default function DeliverablesPage() {
   const [expandedId, setExpandedId] = useState<number | null>(null)
   const [viewingContent, setViewingContent] = useState<any>(null)
+  const [showCreateModal, setShowCreateModal] = useState(false)
   const [deliverables, setDeliverables] = useState([
     {
       id: 1,
@@ -77,7 +78,10 @@ export default function DeliverablesPage() {
               <h2 className="text-5xl font-bold tracking-tight text-foreground">Deliverables</h2>
               <p className="mt-4 text-xl text-muted-foreground">{deliverables.length} deliverables</p>
             </div>
-            <button className="flex items-center gap-2 rounded-lg bg-[#003A70] px-6 py-3 text-base font-semibold text-white hover:bg-[#0052A3] transition-colors">
+            <button
+              onClick={() => setShowCreateModal(true)}
+              className="flex items-center gap-2 rounded-lg bg-[#003A70] px-6 py-3 text-base font-semibold text-white hover:bg-[#0052A3] transition-colors"
+            >
               <Plus className="h-5 w-5" />
               Create Deliverable
             </button>
@@ -208,6 +212,98 @@ export default function DeliverablesPage() {
           </p>
         </div>
       </footer>
+
+      {/* Create Deliverable Modal */}
+      {showCreateModal && (
+        <div
+          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+          onClick={() => setShowCreateModal(false)}
+        >
+          <div
+            className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="sticky top-0 bg-white border-b border-gray-200 p-6">
+              <h2 className="text-2xl font-bold text-foreground">Create New Deliverable</h2>
+            </div>
+
+            <div className="p-6">
+              <p className="text-base text-gray-600 mb-6">
+                This is a demo page. To create actual deliverables, please use the full application with backend API access.
+              </p>
+
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-semibold text-foreground mb-2">
+                    Deliverable Name
+                  </label>
+                  <input
+                    type="text"
+                    className="w-full px-4 py-2 border-2 border-border rounded-lg focus:border-[#003A70] focus:outline-none"
+                    placeholder="e.g., Q4 Product Launch Blog Post"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-semibold text-foreground mb-2">
+                      Template
+                    </label>
+                    <select className="w-full px-4 py-2 border-2 border-border rounded-lg focus:border-[#003A70] focus:outline-none">
+                      <option value="">Select template...</option>
+                      <option value="manifesto">Brand Manifesto</option>
+                      <option value="press">Press Release</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-semibold text-foreground mb-2">
+                      Brand Voice
+                    </label>
+                    <select className="w-full px-4 py-2 border-2 border-border rounded-lg focus:border-[#003A70] focus:outline-none">
+                      <option value="">Select voice...</option>
+                      <option value="corporate">Corporate Brand Voice</option>
+                      <option value="product">Product Division Voice</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-semibold text-foreground mb-2">
+                    Story Model
+                  </label>
+                  <select className="w-full px-4 py-2 border-2 border-border rounded-lg focus:border-[#003A70] focus:outline-none">
+                    <option value="">Select story model...</option>
+                    <option value="narrative">Brand Narrative Framework</option>
+                    <option value="news">News Story Framework</option>
+                  </select>
+                </div>
+
+                <div className="bg-blue-50 border-2 border-blue-200 rounded-lg p-4">
+                  <p className="text-sm text-blue-900">
+                    <strong>Note:</strong> In the full application, you would select UNF elements to include in your deliverable. This demo shows the static UI only.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="sticky bottom-0 bg-white border-t border-gray-200 p-6 flex justify-end gap-3">
+              <button
+                onClick={() => setShowCreateModal(false)}
+                className="px-6 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors font-semibold"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => setShowCreateModal(false)}
+                className="px-6 py-2 bg-[#003A70] text-white rounded-lg hover:bg-[#0052A3] transition-colors font-semibold"
+              >
+                Create Deliverable
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* View Content Modal */}
       {viewingContent && (
