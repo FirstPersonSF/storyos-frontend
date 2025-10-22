@@ -8,9 +8,7 @@ import { useState } from "react"
 export default function DeliverablesPage() {
   const [expandedId, setExpandedId] = useState<number | null>(null)
   const [viewingContent, setViewingContent] = useState<any>(null)
-
-  // Sample deliverables data
-  const deliverables = [
+  const [deliverables, setDeliverables] = useState([
     {
       id: 1,
       name: "Brand Manifesto - Corporate Voice",
@@ -42,7 +40,17 @@ export default function DeliverablesPage() {
         "Benefits": "Turns data into decisions that improve efficiency and safety."
       }
     },
-  ]
+  ])
+
+  const handleRefresh = (deliverableId: number) => {
+    setDeliverables(prevDeliverables =>
+      prevDeliverables.map(d =>
+        d.id === deliverableId
+          ? { ...d, hasUpdates: false, updatedElements: [] }
+          : d
+      )
+    )
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -149,7 +157,10 @@ export default function DeliverablesPage() {
                         </Badge>
                       ))}
                     </div>
-                    <button className="flex items-center gap-2 rounded-md bg-yellow-600 px-4 py-2 text-sm font-semibold text-white hover:bg-yellow-700 transition-colors">
+                    <button
+                      onClick={() => handleRefresh(deliverable.id)}
+                      className="flex items-center gap-2 rounded-md bg-yellow-600 px-4 py-2 text-sm font-semibold text-white hover:bg-yellow-700 transition-colors"
+                    >
                       <RefreshCw className="h-4 w-4" />
                       Refresh Deliverable
                     </button>
