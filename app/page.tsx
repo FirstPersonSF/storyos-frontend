@@ -106,6 +106,7 @@ export default function StoryOSDashboard() {
                 title: "Deliverables",
                 description: "Final outputs with alerts",
                 detail: "Combine elements with templates and brand voices to create content.",
+                href: "/deliverables",
               },
               {
                 icon: Play,
@@ -119,10 +120,16 @@ export default function StoryOSDashboard() {
                 title: "API Documentation",
                 description: "REST API docs",
                 detail: "Integrate StoryOS into your existing tools and workflows.",
+                href: "https://web-production-9c58.up.railway.app/docs",
+                external: true,
               },
             ].map((feature, index) => {
-              const CardWrapper = feature.href ? Link : "div"
-              const cardProps = feature.href ? { href: feature.href } : {}
+              const CardWrapper = feature.href ? (feature.external ? "a" : Link) : "div"
+              const cardProps = feature.href
+                ? feature.external
+                  ? { href: feature.href, target: "_blank", rel: "noopener noreferrer" }
+                  : { href: feature.href }
+                : {}
 
               return (
                 <CardWrapper key={index} {...cardProps}>
