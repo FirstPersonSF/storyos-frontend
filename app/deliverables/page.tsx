@@ -3,8 +3,12 @@
 import { ArrowLeft, Plus, AlertTriangle, RefreshCw } from "lucide-react"
 import Link from "next/link"
 import { Badge } from "@/components/ui/badge"
+import { useState } from "react"
 
 export default function DeliverablesPage() {
+  const [expandedId, setExpandedId] = useState<number | null>(null)
+  const [viewingContent, setViewingContent] = useState<any>(null)
+
   // Sample deliverables data
   const deliverables = [
     {
@@ -15,6 +19,12 @@ export default function DeliverablesPage() {
       storyModel: "Brand Narrative Framework",
       createdAt: "2025-01-15",
       hasUpdates: false,
+      rendered_content: {
+        "Opening": "Today's industries must balance growth with responsibility. Hexagon AB delivers autonomous technologies that transform data into real-world outcomes.",
+        "Problem": "Despite rapid advances in technology, many organisations still struggle to connect their data and use it to drive real-world outcomes.",
+        "Solution": "Our Reality Technology connects physical and digital realities to improve performance and sustainability.",
+        "Call to Action": "Discover how Hexagon AB empowers industries to act faster and more responsibly."
+      }
     },
     {
       id: 2,
@@ -25,6 +35,12 @@ export default function DeliverablesPage() {
       createdAt: "2025-01-14",
       hasUpdates: true,
       updatedElements: ["Problem", "Key Messages"],
+      rendered_content: {
+        "Headline": "We Transform Data Into Action",
+        "Problem": "Industries struggle with data silos and underutilized digital tools.",
+        "Solution": "We unify sensors, software, and smart automation to bridge the gap from data to action.",
+        "Benefits": "Turns data into decisions that improve efficiency and safety."
+      }
     },
   ]
 
@@ -85,10 +101,16 @@ export default function DeliverablesPage() {
                     <p className="text-sm text-muted-foreground">Created on {deliverable.createdAt}</p>
                   </div>
                   <div className="flex gap-2">
-                    <button className="rounded-md border-2 border-border bg-white px-4 py-2 text-sm font-semibold text-foreground hover:bg-gray-50 transition-colors">
-                      Edit
+                    <button
+                      onClick={() => setExpandedId(expandedId === deliverable.id ? null : deliverable.id)}
+                      className="rounded-md border-2 border-border bg-white px-4 py-2 text-sm font-semibold text-foreground hover:bg-gray-50 transition-colors"
+                    >
+                      {expandedId === deliverable.id ? "Collapse" : "Expand"}
                     </button>
-                    <button className="rounded-md border-2 border-border bg-white px-4 py-2 text-sm font-semibold text-foreground hover:bg-gray-50 transition-colors">
+                    <button
+                      onClick={() => setViewingContent(deliverable)}
+                      className="rounded-md border-2 border-[#003A70] bg-[#003A70] px-4 py-2 text-sm font-semibold text-white hover:bg-[#0052A3] transition-colors"
+                    >
                       View
                     </button>
                   </div>
@@ -133,6 +155,19 @@ export default function DeliverablesPage() {
                     </button>
                   </div>
                 )}
+
+                {/* Expanded Content */}
+                {expandedId === deliverable.id && deliverable.rendered_content && (
+                  <div className="mt-6 space-y-4 border-t pt-6">
+                    <h4 className="text-lg font-bold text-foreground mb-4">Rendered Content</h4>
+                    {Object.entries(deliverable.rendered_content).map(([section, content]) => (
+                      <div key={section} className="border-b pb-4 last:border-b-0">
+                        <h5 className="text-sm font-semibold text-[#003A70] mb-2">{section}</h5>
+                        <p className="text-sm text-gray-700 leading-relaxed">{content as string}</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             ))}
           </div>
@@ -162,6 +197,52 @@ export default function DeliverablesPage() {
           </p>
         </div>
       </footer>
+
+      {/* View Content Modal */}
+      {viewingContent && (
+        <div
+          className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4"
+          onClick={() => setViewingContent(null)}
+        >
+          <div
+            className="bg-white rounded-lg max-w-3xl w-full max-h-[90vh] overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="sticky top-0 bg-white border-b border-gray-200 p-6 flex items-start justify-between">
+              <div>
+                <h2 className="text-2xl font-bold text-foreground">{viewingContent.name}</h2>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Template: {viewingContent.template} | Voice: {viewingContent.voice}
+                </p>
+              </div>
+              <button
+                onClick={() => setViewingContent(null)}
+                className="text-gray-500 hover:text-gray-700 text-3xl leading-none"
+              >
+                ×
+              </button>
+            </div>
+
+            <div className="p-6 space-y-6">
+              {viewingContent.rendered_content && Object.entries(viewingContent.rendered_content).map(([section, content]) => (
+                <div key={section} className="border-b pb-4 last:border-b-0">
+                  <h3 className="text-lg font-semibold text-[#003A70] mb-3">{section}</h3>
+                  <p className="text-base text-gray-700 leading-relaxed">{content as string}</p>
+                </div>
+              ))}
+            </div>
+
+            <div className="sticky bottom-0 bg-white border-t border-gray-200 p-6 flex justify-end">
+              <button
+                onClick={() => setViewingContent(null)}
+                className="px-6 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
