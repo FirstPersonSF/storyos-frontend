@@ -1,22 +1,49 @@
 "use client"
 
+import { useState, useEffect } from 'react';
 import { useDemo } from '../context/DemoContext';
+import { deliverablesAPI } from '@/lib/api/client';
 
 interface ProvenanceViewerProps {
   deliverable: any;
 }
 
 export default function ProvenanceViewer({ deliverable }: ProvenanceViewerProps) {
-  const { templates, voices, elements } = useDemo();
+  const { templates, voices, elements, storyModels } = useDemo();
+  const [versions, setVersions] = useState<any[]>([]);
+  const [loadingVersions, setLoadingVersions] = useState(false);
 
   // Find names from context
   const template = templates.find(t => t.id === deliverable.template_id);
   const voice = voices.find(v => v.id === deliverable.voice_id);
+  const storyModel = storyModels.find(sm => sm.id === deliverable.story_model_id);
+
+  // Load version history on mount
+  useEffect(() => {
+    const loadVersions = async () => {
+      setLoadingVersions(true);
+      try {
+        const response = await deliverablesAPI.getDeliverableVersions(deliverable.id);
+        setVersions(response.data);
+      } catch (error) {
+        console.error('Failed to load version history:', error);
+      } finally {
+        setLoadingVersions(false);
+      }
+    };
+    loadVersions();
+  }, [deliverable.id]);
 
   // Helper to get element name
   const getElementName = (elementId: string) => {
     const element = elements.find(e => e.id === elementId);
     return element ? element.name : 'Unknown';
+  };
+
+  // Helper to get story model name
+  const getStoryModelName = (storyModelId: string) => {
+    const model = storyModels.find(sm => sm.id === storyModelId);
+    return model ? model.name : 'Unknown Story Model';
   };
 
   return (
@@ -37,7 +64,7 @@ export default function ProvenanceViewer({ deliverable }: ProvenanceViewerProps)
         <div>
           <span className="text-muted-foreground font-semibold block mb-2">Story Model:</span>
           <div className="bg-gray-50 rounded-lg p-4 border-2 border-gray-200">
-            <div className="font-bold text-base text-foreground">Problem-Agitate-Solve (PAS)</div>
+            <div className="font-bold text-base text-foreground">{storyModel?.name || 'Unknown Story Model'}</div>
             <div className="font-mono text-sm text-muted-foreground mt-1">{deliverable.story_model_id}</div>
           </div>
         </div>
@@ -94,6 +121,77 @@ export default function ProvenanceViewer({ deliverable }: ProvenanceViewerProps)
             </div>
           </div>
         )}
+
+        {/* Version History */}
+        <div>
+          <span className="text-muted-foreground font-semibold block mb-2">Version History:</span>
+          {loadingVersions ? (
+            <div className="bg-gray-50 rounded-lg p-4 border-2 border-gray-200 text-sm text-gray-500">
+              Loading version history...
+            </div>
+          ) : versions.length > 0 ? (
+            <div className="bg-gray-50 rounded-lg p-4 border-2 border-gray-200">
+              <div className="space-y-3">
+                {versions.map((version: any, index: number) => {
+                  const isCurrentVersion = version.id === deliverable.id;
+                  const versionStoryModel = getStoryModelName(version.story_model_id);
+
+                  return (
+                    <div
+                      key={version.id}
+                      className={`p-3 rounded-lg border ${
+                        isCurrentVersion
+                          ? 'border-purple-500 bg-purple-50'
+                          : 'border-gray-300 bg-white'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-2">
+                          <span className="font-bold text-sm">v{version.version}</span>
+                          <span className={`px-2 py-0.5 rounded text-xs font-semibold ${
+                            version.status === 'published'
+                              ? 'bg-green-100 text-green-700'
+                              : version.status === 'superseded'
+                              ? 'bg-gray-200 text-gray-600'
+                              : 'bg-yellow-100 text-yellow-700'
+                          }`}>
+                            {version.status}
+                          </span>
+                          {isCurrentVersion && (
+                            <span className="px-2 py-0.5 rounded text-xs font-semibold bg-purple-600 text-white">
+                              Current
+                            </span>
+                          )}
+                        </div>
+                        <span className="text-xs text-gray-500">
+                          {new Date(version.created_at).toLocaleDateString()}
+                        </span>
+                      </div>
+                      <div className="text-xs text-gray-600 space-y-1">
+                        <div><span className="font-semibold">Story Model:</span> {versionStoryModel}</div>
+                        <div><span className="font-semibold">Voice:</span> v{version.voice_version}</div>
+                        {version.prev_deliverable_id && (
+                          <div className="text-xs text-gray-400 mt-1">
+                            ↑ Supersedes previous version
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+              {versions.length > 1 && (
+                <div className="mt-3 pt-3 border-t border-gray-300 text-xs text-gray-500">
+                  <strong>Total versions:</strong> {versions.length} • <strong>Changes tracked:</strong> Story model, voice, instance data, element updates
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="bg-gray-50 rounded-lg p-4 border-2 border-gray-200 text-sm text-gray-500">
+              No version history available
+            </div>
+          )}
+        </div>
 
         {/* Timestamps */}
         <div className="grid grid-cols-2 gap-4 text-sm text-muted-foreground pt-4 border-t-2 border-gray-200">

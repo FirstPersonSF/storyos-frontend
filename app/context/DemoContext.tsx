@@ -16,7 +16,7 @@ interface DemoContextType {
   refreshAllDeliverables: () => Promise<{ success: boolean; error?: string }>;
   deleteDeliverable: (deliverableId: string) => Promise<{ success: boolean; error?: string }>;
   updateElement: (elementId: string, content: string) => Promise<{ success: boolean; error?: string }>;
-  updateDeliverableStoryModel: (deliverableId: string, newStoryModelId: string) => Promise<{ success: boolean; error?: string }>;
+  updateDeliverableStoryModel: (deliverableId: string, newStoryModelId: string, instanceData?: any) => Promise<{ success: boolean; error?: string }>;
   loadInitialData: () => Promise<void>;
 }
 
@@ -39,17 +39,33 @@ export function DemoProvider({ children }: { children: ReactNode }) {
   async function loadInitialData() {
     setLoading(true);
     try {
-      const [templatesRes, voicesRes, elementsRes, storyModelsRes] = await Promise.all([
+      const [templatesRes, voicesRes, elementsRes, storyModelsRes, deliverablesRes] = await Promise.all([
         templatesAPI.getTemplates(),
         voicesAPI.getVoices(),
         unfAPI.getElements({ status: 'approved' }),
-        storyModelsAPI.getStoryModels()
+        storyModelsAPI.getStoryModels(),
+        deliverablesAPI.getDeliverables()
       ]);
 
       setTemplates(templatesRes.data);
       setVoices(voicesRes.data);
       setElements(elementsRes.data);
       setStoryModels(storyModelsRes.data);
+
+      // Fetch alerts for each deliverable
+      const deliverablesWithAlerts = await Promise.all(
+        deliverablesRes.data.map(async (d: any) => {
+          try {
+            const withAlerts = await deliverablesAPI.getDeliverableWithAlerts(d.id);
+            return withAlerts.data;
+          } catch (err) {
+            console.error(`Failed to load alerts for deliverable ${d.id}:`, err);
+            return d;
+          }
+        })
+      );
+
+      setDeliverables(deliverablesWithAlerts);
     } catch (err: any) {
       setError(err.message);
       console.error('Failed to load initial data:', err);
@@ -161,22 +177,32 @@ export function DemoProvider({ children }: { children: ReactNode }) {
     }
   }
 
-  async function updateDeliverableStoryModel(deliverableId: string, newStoryModelId: string) {
+  async function updateDeliverableStoryModel(deliverableId: string, newStoryModelId: string, instanceData?: any) {
     setLoading(true);
     try {
-      // Update deliverable with new story model
-      const response = await deliverablesAPI.updateDeliverable(deliverableId, {
+      // Update deliverable with new story model and instance data
+      const updatePayload: any = {
         story_model_id: newStoryModelId
-      });
+      };
+
+      if (instanceData) {
+        updatePayload.instance_data = instanceData;
+      }
+
+      await deliverablesAPI.updateDeliverable(deliverableId, updatePayload);
+
+      // Refresh to re-render content with new story model
+      await deliverablesAPI.refreshDeliverable(deliverableId);
 
       // Fetch with alerts
-      const withAlerts = await deliverablesAPI.getDeliverableWithAlerts(response.data.id);
+      const withAlerts = await deliverablesAPI.getDeliverableWithAlerts(deliverableId);
 
       setDeliverables(prev =>
         prev.map(d => d.id === deliverableId ? withAlerts.data : d)
       );
       return { success: true };
     } catch (error: any) {
+      console.error('Failed to update story model:', error);
       return { success: false, error: error.message };
     } finally {
       setLoading(false);

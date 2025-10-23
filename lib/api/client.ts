@@ -59,6 +59,7 @@ export const deliverablesAPI = {
   getDeliverables: (params?: any) => apiClient.get('/deliverables', { params }),
   getDeliverable: (id: string) => apiClient.get(`/deliverables/${id}`),
   getDeliverableWithAlerts: (id: string) => apiClient.get(`/deliverables/${id}/with-alerts`),
+  getDeliverableVersions: (id: string) => apiClient.get(`/deliverables/${id}/versions`),
   createDeliverable: (data: any) => apiClient.post('/deliverables', data),
   updateDeliverable: (id: string, data: any) => apiClient.put(`/deliverables/${id}`, data),
   validateDeliverable: (id: string) => apiClient.post(`/deliverables/${id}/validate`),

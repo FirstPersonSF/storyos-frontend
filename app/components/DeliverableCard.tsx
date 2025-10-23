@@ -51,8 +51,8 @@ export default function DeliverableCard({ deliverable }: DeliverableCardProps) {
     }
   };
 
-  const handleStoryModelChange = async (newModelId: string) => {
-    const result = await updateDeliverableStoryModel(deliverable.id, newModelId);
+  const handleStoryModelChange = async (newModelId: string, instanceData?: any) => {
+    const result = await updateDeliverableStoryModel(deliverable.id, newModelId, instanceData);
     if (result.success) {
       setIsEditing(false);
     }
@@ -87,6 +87,9 @@ export default function DeliverableCard({ deliverable }: DeliverableCardProps) {
               </span>
               <span className="px-3 py-1 bg-gray-600 text-white rounded-lg font-semibold flex items-center">
                 {deliverable.status}
+              </span>
+              <span className="px-3 py-1 bg-purple-600 text-white rounded-lg font-semibold flex items-center">
+                v{deliverable.version}
               </span>
             </div>
           </div>
@@ -267,6 +270,7 @@ export default function DeliverableCard({ deliverable }: DeliverableCardProps) {
           <StoryModelSelector
             deliverableId={deliverable.id}
             currentModelId={deliverable.story_model_id}
+            currentInstanceData={deliverable.instance_data}
             onModelChange={handleStoryModelChange}
             onCancel={() => setIsEditing(false)}
           />
