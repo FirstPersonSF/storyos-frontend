@@ -8,6 +8,7 @@ import DeliverableCard from "../components/DeliverableCard"
 
 function DemoPageContent() {
   const { templates, voices, deliverables, loading, createDeliverable } = useDemo()
+  const [deliverableName, setDeliverableName] = useState("")
   const [selectedTemplate, setSelectedTemplate] = useState("")
   const [selectedVoice, setSelectedVoice] = useState("")
   const [isCreating, setIsCreating] = useState(false)
@@ -32,6 +33,11 @@ function DemoPageContent() {
   }
 
   const handleCreateDeliverable = async () => {
+    if (!deliverableName.trim()) {
+      alert('Please enter a name for the deliverable')
+      return
+    }
+
     if (!selectedTemplate || !selectedVoice) {
       alert('Please select both a template and a voice')
       return
@@ -48,11 +54,12 @@ function DemoPageContent() {
     }
 
     setIsCreating(true)
-    const result = await createDeliverable(selectedTemplate, selectedVoice, instanceData)
+    const result = await createDeliverable(deliverableName, selectedTemplate, selectedVoice, instanceData)
     setIsCreating(false)
 
     if (result.success) {
       // Clear selections after successful creation
+      setDeliverableName("")
       setSelectedTemplate("")
       setSelectedVoice("")
       setInstanceData({})
@@ -219,6 +226,22 @@ function DemoPageContent() {
             <div className="rounded-lg border-2 border-[#003A70]/10 bg-white shadow-lg">
               <div className="p-8 lg:p-12">
                 <div className="space-y-6">
+                  {/* Name Field */}
+                  <div>
+                    <label className="mb-3 block text-sm font-semibold text-foreground">
+                      Deliverable Name <span className="text-red-600">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={deliverableName}
+                      onChange={(e) => setDeliverableName(e.target.value)}
+                      className="w-full rounded-lg border-2 border-border bg-white px-4 py-3 text-sm focus:border-[#003A70] focus:outline-none focus:ring-2 focus:ring-[#003A70]/20"
+                      placeholder="Enter a descriptive name for this deliverable"
+                      disabled={loading}
+                      required
+                    />
+                  </div>
+
                   {/* Template Selector */}
                   <div>
                     <label className="mb-3 block text-sm font-semibold text-foreground">Template</label>
@@ -316,7 +339,7 @@ function DemoPageContent() {
                   {/* Create Button */}
                   <button
                     onClick={handleCreateDeliverable}
-                    disabled={!selectedTemplate || !selectedVoice || isCreating}
+                    disabled={!deliverableName.trim() || !selectedTemplate || !selectedVoice || isCreating}
                     className="h-12 w-full rounded-lg bg-[#003A70] text-base font-semibold text-white hover:bg-[#0052A3] disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
                   >
                     {isCreating ? 'Creating...' : 'Create Deliverable'}

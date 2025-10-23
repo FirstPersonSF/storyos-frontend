@@ -11,7 +11,7 @@ interface DemoContextType {
   storyModels: any[];
   loading: boolean;
   error: string | null;
-  createDeliverable: (templateId: string, voiceId: string, instanceData: any) => Promise<{ success: boolean; deliverable?: any; error?: string }>;
+  createDeliverable: (name: string, templateId: string, voiceId: string, instanceData: any) => Promise<{ success: boolean; deliverable?: any; error?: string }>;
   refreshDeliverable: (deliverableId: string) => Promise<{ success: boolean; error?: string }>;
   refreshAllDeliverables: () => Promise<{ success: boolean; error?: string }>;
   deleteDeliverable: (deliverableId: string) => Promise<{ success: boolean; error?: string }>;
@@ -74,13 +74,14 @@ export function DemoProvider({ children }: { children: ReactNode }) {
     }
   }
 
-  async function createDeliverable(templateId: string, voiceId: string, instanceData: any) {
+  async function createDeliverable(name: string, templateId: string, voiceId: string, instanceData: any) {
     setLoading(true);
     setError(null);
 
     try {
       // Create deliverable
       const response = await deliverablesAPI.createDeliverable({
+        name: name,
         template_id: templateId,
         voice_id: voiceId,
         instance_data: instanceData,
