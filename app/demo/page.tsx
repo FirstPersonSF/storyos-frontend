@@ -3,20 +3,63 @@
 import { ArrowLeft, CheckCircle2, Lightbulb, Play } from "lucide-react"
 import Link from "next/link"
 import { useState } from "react"
+import { DemoProvider, useDemo } from "../context/DemoContext"
+import DeliverableCard from "../components/DeliverableCard"
 
-export default function DemoPage() {
+function DemoPageContent() {
+  const { templates, voices, deliverables, loading, createDeliverable } = useDemo()
   const [selectedTemplate, setSelectedTemplate] = useState("")
   const [selectedVoice, setSelectedVoice] = useState("")
+  const [isCreating, setIsCreating] = useState(false)
+  const [instanceData, setInstanceData] = useState<Record<string, any>>({})
 
-  const templates = [
-    { id: "manifesto", name: "Brand Manifesto" },
-    { id: "press", name: "Press Release" },
-  ]
+  // Get selected template object to access instance_fields
+  const selectedTemplateObj = templates.find(t => t.id === selectedTemplate)
+  const instanceFields = selectedTemplateObj?.instance_fields || []
 
-  const voices = [
-    { id: "corporate", name: "Corporate Brand Voice" },
-    { id: "product", name: "Product Division Voice" },
-  ]
+  // Handle template change - reset instance data
+  const handleTemplateChange = (templateId: string) => {
+    setSelectedTemplate(templateId)
+    setInstanceData({})
+  }
+
+  // Handle instance field change
+  const handleInstanceFieldChange = (fieldName: string, value: any) => {
+    setInstanceData(prev => ({
+      ...prev,
+      [fieldName]: value
+    }))
+  }
+
+  const handleCreateDeliverable = async () => {
+    if (!selectedTemplate || !selectedVoice) {
+      alert('Please select both a template and a voice')
+      return
+    }
+
+    // Validate required instance fields
+    const missingFields = instanceFields
+      .filter((field: any) => field.required && !instanceData[field.name])
+      .map((field: any) => field.name)
+
+    if (missingFields.length > 0) {
+      alert(`Please fill in required fields: ${missingFields.join(', ')}`)
+      return
+    }
+
+    setIsCreating(true)
+    const result = await createDeliverable(selectedTemplate, selectedVoice, instanceData)
+    setIsCreating(false)
+
+    if (result.success) {
+      // Clear selections after successful creation
+      setSelectedTemplate("")
+      setSelectedVoice("")
+      setInstanceData({})
+    } else {
+      alert(`Error creating deliverable: ${result.error}`)
+    }
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -95,7 +138,7 @@ export default function DemoPage() {
                     number: 5,
                     title: "Provenance",
                     description:
-                      "Click 'Provenance' to see complete audit trail (templates, voices, elements, transformations).",
+                      'Click "Provenance" to see complete audit trail (templates, voices, elements, transformations).',
                     color: "#003A70",
                   },
                 ].map((item) => (
@@ -153,7 +196,7 @@ export default function DemoPage() {
                     {[
                       "Compare voice transformations (Corporate vs Product)",
                       "Swap story model (Edit → Change Story Model)",
-                      "View provenance (Click on 'Provenance' button)",
+                      'View provenance (Click on "Provenance" button)',
                     ].map((item, i) => (
                       <li key={i} className="flex items-start gap-4">
                         <CheckCircle2 className="h-6 w-6 flex-shrink-0 text-green-600" />
@@ -181,8 +224,9 @@ export default function DemoPage() {
                     <label className="mb-3 block text-sm font-semibold text-foreground">Template</label>
                     <select
                       value={selectedTemplate}
-                      onChange={(e) => setSelectedTemplate(e.target.value)}
+                      onChange={(e) => handleTemplateChange(e.target.value)}
                       className="w-full rounded-lg border-2 border-border bg-white px-4 py-3 text-sm focus:border-[#003A70] focus:outline-none focus:ring-2 focus:ring-[#003A70]/20"
+                      disabled={loading}
                     >
                       <option value="">Select a template...</option>
                       {templates.map((t) => (
@@ -200,6 +244,7 @@ export default function DemoPage() {
                       value={selectedVoice}
                       onChange={(e) => setSelectedVoice(e.target.value)}
                       className="w-full rounded-lg border-2 border-border bg-white px-4 py-3 text-sm focus:border-[#003A70] focus:outline-none focus:ring-2 focus:ring-[#003A70]/20"
+                      disabled={loading}
                     >
                       <option value="">Select a voice...</option>
                       {voices.map((v) => (
@@ -209,6 +254,53 @@ export default function DemoPage() {
                       ))}
                     </select>
                   </div>
+
+                  {/* Instance Fields */}
+                  {instanceFields.length > 0 && (
+                    <div className="rounded-lg border-2 border-blue-200 bg-blue-50 p-6">
+                      <h4 className="text-base font-bold text-foreground mb-4">Instance Fields</h4>
+                      <p className="text-sm text-muted-foreground mb-4">
+                        Fill in the fields below to customize this {selectedTemplateObj?.name}
+                      </p>
+                      <div className="space-y-4">
+                        {instanceFields.map((field: any) => (
+                          <div key={field.name}>
+                            <label className="mb-2 block text-sm font-semibold text-foreground">
+                              {field.description || field.name}
+                              {field.required && <span className="text-red-600 ml-1">*</span>}
+                            </label>
+                            {field.field_type === 'text' ? (
+                              <input
+                                type="text"
+                                value={instanceData[field.name] || ''}
+                                onChange={(e) => handleInstanceFieldChange(field.name, e.target.value)}
+                                className="w-full rounded-lg border-2 border-gray-300 bg-white px-4 py-2 text-sm focus:border-[#003A70] focus:outline-none focus:ring-2 focus:ring-[#003A70]/20"
+                                placeholder={field.description}
+                                required={field.required}
+                              />
+                            ) : field.field_type === 'date' ? (
+                              <input
+                                type="date"
+                                value={instanceData[field.name] || ''}
+                                onChange={(e) => handleInstanceFieldChange(field.name, e.target.value)}
+                                className="w-full rounded-lg border-2 border-gray-300 bg-white px-4 py-2 text-sm focus:border-[#003A70] focus:outline-none focus:ring-2 focus:ring-[#003A70]/20"
+                                required={field.required}
+                              />
+                            ) : (
+                              <input
+                                type="text"
+                                value={instanceData[field.name] || ''}
+                                onChange={(e) => handleInstanceFieldChange(field.name, e.target.value)}
+                                className="w-full rounded-lg border-2 border-gray-300 bg-white px-4 py-2 text-sm focus:border-[#003A70] focus:outline-none focus:ring-2 focus:ring-[#003A70]/20"
+                                placeholder={field.description}
+                                required={field.required}
+                              />
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
 
                   {/* Story Model Info */}
                   {selectedTemplate && (
@@ -223,10 +315,11 @@ export default function DemoPage() {
 
                   {/* Create Button */}
                   <button
-                    disabled={!selectedTemplate || !selectedVoice}
+                    onClick={handleCreateDeliverable}
+                    disabled={!selectedTemplate || !selectedVoice || isCreating}
                     className="h-12 w-full rounded-lg bg-[#003A70] text-base font-semibold text-white hover:bg-[#0052A3] disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
                   >
-                    Create Deliverable
+                    {isCreating ? 'Creating...' : 'Create Deliverable'}
                   </button>
                 </div>
               </div>
@@ -251,7 +344,7 @@ export default function DemoPage() {
                     'Choose "Corporate Brand Voice"',
                     'Click "Create Deliverable"',
                     'Repeat with "Product Division Voice"',
-                    "Click on 'Expand' button on both cards to compare content",
+                    'Click on "Expand" button on both cards to compare content',
                   ].map((step, i) => (
                     <li key={i} className="flex items-start gap-4">
                       <div
@@ -334,13 +427,21 @@ export default function DemoPage() {
             <div className="mb-12 text-center">
               <h3 className="mb-4 text-3xl font-bold tracking-tight text-foreground lg:text-4xl">Deliverables</h3>
             </div>
-            <div className="rounded-lg border-2 border-[#003A70]/10 bg-white p-16 shadow-lg text-center">
-              <div className="mb-4 text-6xl">📄</div>
-              <h4 className="mb-2 text-2xl font-bold text-foreground">No deliverables yet</h4>
-              <p className="text-lg text-muted-foreground">
-                Create your first deliverable using the form above to get started
-              </p>
-            </div>
+            {deliverables.length > 0 ? (
+              <div className="space-y-6">
+                {deliverables.map((deliverable) => (
+                  <DeliverableCard key={deliverable.id} deliverable={deliverable} />
+                ))}
+              </div>
+            ) : (
+              <div className="rounded-lg border-2 border-[#003A70]/10 bg-white p-16 shadow-lg text-center">
+                <div className="mb-4 text-6xl">📄</div>
+                <h4 className="mb-2 text-2xl font-bold text-foreground">No deliverables yet</h4>
+                <p className="text-lg text-muted-foreground">
+                  Create your first deliverable using the form above to get started
+                </p>
+              </div>
+            )}
           </div>
         </div>
       </section>
@@ -354,5 +455,13 @@ export default function DemoPage() {
         </div>
       </footer>
     </div>
+  )
+}
+
+export default function DemoPage() {
+  return (
+    <DemoProvider>
+      <DemoPageContent />
+    </DemoProvider>
   )
 }

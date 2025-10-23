@@ -30,10 +30,12 @@ export default function StoryOSDashboard() {
             <p className="mb-8 text-pretty text-lg text-muted-foreground lg:text-xl">
               Content management system for enterprise storytelling
             </p>
-            <Button size="lg" className="h-12 bg-[#003A70] px-8 text-base font-semibold hover:bg-[#0052A3]">
-              Start Demo Workflow
-              <ArrowRight className="ml-2 h-5 w-5" />
-            </Button>
+            <Link href="/demo">
+              <Button size="lg" className="h-12 bg-[#003A70] px-8 text-base font-semibold hover:bg-[#0052A3]">
+                Start Demo Workflow
+                <ArrowRight className="ml-2 h-5 w-5" />
+              </Button>
+            </Link>
           </div>
 
           {/* Demo Workflow Steps */}

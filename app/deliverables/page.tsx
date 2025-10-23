@@ -1,305 +1,444 @@
 "use client"
 
+import { useState, useEffect } from 'react';
 import { ArrowLeft, Plus, AlertTriangle, RefreshCw } from "lucide-react"
 import Link from "next/link"
+import ReactMarkdown from 'react-markdown';
 import { Badge } from "@/components/ui/badge"
-import { useState } from "react"
+import { Button } from "@/components/ui/button"
+import { deliverablesAPI, templatesAPI, unfAPI, voicesAPI } from '@/lib/api/client';
 
 export default function DeliverablesPage() {
-  const [expandedId, setExpandedId] = useState<number | null>(null)
-  const [viewingContent, setViewingContent] = useState<any>(null)
-  const [showCreateModal, setShowCreateModal] = useState(false)
-  const [deliverables, setDeliverables] = useState([
-    {
-      id: 1,
-      name: "Brand Manifesto - Corporate Voice",
-      template: "Brand Manifesto",
-      voice: "Corporate Brand Voice",
-      storyModel: "Brand Narrative Framework",
-      createdAt: "2025-01-15",
-      hasUpdates: false,
-      rendered_content: {
-        "Opening": "Today's industries must balance growth with responsibility. Hexagon AB delivers autonomous technologies that transform data into real-world outcomes.",
-        "Problem": "Despite rapid advances in technology, many organisations still struggle to connect their data and use it to drive real-world outcomes.",
-        "Solution": "Our Reality Technology connects physical and digital realities to improve performance and sustainability.",
-        "Call to Action": "Discover how Hexagon AB empowers industries to act faster and more responsibly."
-      }
-    },
-    {
-      id: 2,
-      name: "Press Release Q1 2025",
-      template: "Press Release",
-      voice: "Product Division Voice",
-      storyModel: "News Story Framework",
-      createdAt: "2025-01-14",
-      hasUpdates: true,
-      updatedElements: ["Problem", "Key Messages"],
-      rendered_content: {
-        "Headline": "We Transform Data Into Action",
-        "Problem": "Industries struggle with data silos and underutilized digital tools.",
-        "Solution": "We unify sensors, software, and smart automation to bridge the gap from data to action.",
-        "Benefits": "Turns data into decisions that improve efficiency and safety."
-      }
-    },
-  ])
+  const [deliverables, setDeliverables] = useState<any[]>([]);
+  const [templates, setTemplates] = useState<any[]>([]);
+  const [elements, setElements] = useState<any[]>([]);
+  const [voices, setVoices] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [selectedDeliverable, setSelectedDeliverable] = useState<any>(null);
+  const [alerts, setAlerts] = useState<any[]>([]);
+  const [viewingContent, setViewingContent] = useState<any>(null);
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [formData, setFormData] = useState({
+    name: '',
+    template_id: '',
+    voice_id: '',
+    instance_data: {},
+    selected_elements: [] as string[]
+  });
 
-  const handleRefresh = (deliverableId: number) => {
-    setDeliverables(prevDeliverables =>
-      prevDeliverables.map(d =>
-        d.id === deliverableId
-          ? { ...d, hasUpdates: false, updatedElements: [] }
-          : d
-      )
-    )
+  useEffect(() => {
+    loadDeliverables();
+    loadTemplates();
+    loadElements();
+    loadVoices();
+  }, []);
+
+  const loadDeliverables = async () => {
+    try {
+      setLoading(true);
+      const response = await deliverablesAPI.getDeliverables();
+      setDeliverables(response.data);
+      setError(null);
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const loadTemplates = async () => {
+    try {
+      const response = await templatesAPI.getTemplates();
+      setTemplates(response.data);
+    } catch (err) {
+      console.error('Error loading templates:', err);
+    }
+  };
+
+  const loadElements = async () => {
+    try {
+      const response = await unfAPI.getElements();
+      // Only show approved elements
+      setElements(response.data.filter((e: any) => e.status === 'approved'));
+    } catch (err) {
+      console.error('Error loading elements:', err);
+    }
+  };
+
+  const loadVoices = async () => {
+    try {
+      const response = await voicesAPI.getVoices();
+      setVoices(response.data);
+    } catch (err) {
+      console.error('Error loading voices:', err);
+    }
+  };
+
+  const loadDeliverableWithAlerts = async (id: string) => {
+    try {
+      const response = await deliverablesAPI.getDeliverableWithAlerts(id);
+      setSelectedDeliverable(response.data);
+      setAlerts(response.data.alerts || []);
+    } catch (err) {
+      console.error('Error loading alerts:', err);
+    }
+  };
+
+  const handleCreate = () => {
+    setFormData({
+      name: '',
+      template_id: '',
+      voice_id: '',
+      instance_data: {},
+      selected_elements: []
+    });
+    setShowCreateModal(true);
+  };
+
+  const toggleElement = (elementId: string) => {
+    setFormData(prev => ({
+      ...prev,
+      selected_elements: prev.selected_elements.includes(elementId)
+        ? prev.selected_elements.filter(id => id !== elementId)
+        : [...prev.selected_elements, elementId]
+    }));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      // Build element_versions mapping
+      const element_versions: Record<string, number> = {};
+      formData.selected_elements.forEach(elementId => {
+        const element = elements.find(e => e.id === elementId);
+        if (element) {
+          element_versions[elementId] = element.version;
+        }
+      });
+
+      await deliverablesAPI.createDeliverable({
+        name: formData.name,
+        template_id: formData.template_id,
+        voice_id: formData.voice_id,
+        instance_data: formData.instance_data,
+        element_versions
+      });
+
+      setShowCreateModal(false);
+      loadDeliverables();
+    } catch (err: any) {
+      alert('Error creating deliverable: ' + err.message);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-2xl font-bold text-[#003A70]">Loading deliverables...</div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-2xl font-bold text-red-600">Error: {error}</div>
+        </div>
+      </div>
+    );
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="border-b border-border bg-white">
-        <div className="mx-auto max-w-7xl px-6 py-4 lg:px-8">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <Link href="/" className="flex h-8 w-8 items-center justify-center rounded-md hover:bg-gray-100">
-                <ArrowLeft className="h-4 w-4" />
-              </Link>
-              <h1 className="text-2xl font-bold tracking-tight text-[#003A70]">StoryOS</h1>
-            </div>
-            <span className="text-sm text-muted-foreground">v1.0.0</span>
-          </div>
-        </div>
-      </header>
-
-      {/* Page Header */}
-      <section className="border-b border-border bg-white py-12">
-        <div className="mx-auto max-w-7xl px-6 lg:px-8">
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-5xl font-bold tracking-tight text-foreground">Deliverables</h2>
-              <p className="mt-4 text-xl text-muted-foreground">{deliverables.length} deliverables</p>
-            </div>
-            <button
-              onClick={() => setShowCreateModal(true)}
-              className="flex items-center gap-2 rounded-lg bg-[#003A70] px-6 py-3 text-base font-semibold text-white hover:bg-[#0052A3] transition-colors"
-            >
-              <Plus className="h-5 w-5" />
-              Create Deliverable
-            </button>
-          </div>
-        </div>
-      </section>
-
-      {/* Deliverables List */}
-      <section className="py-16">
-        <div className="mx-auto max-w-7xl px-6 lg:px-8">
-          <div className="space-y-6">
-            {deliverables.map((deliverable) => (
-              <div
-                key={deliverable.id}
-                className="rounded-lg border-2 border-[#003A70]/10 bg-white p-8 shadow-lg transition-all hover:shadow-xl"
-              >
-                {/* Header */}
-                <div className="mb-6 flex items-start justify-between">
-                  <div className="flex-1">
-                    <div className="mb-2 flex items-center gap-3">
-                      <h3 className="text-2xl font-bold text-foreground">{deliverable.name}</h3>
-                      {deliverable.hasUpdates && (
-                        <Badge className="bg-yellow-500 hover:bg-yellow-600">
-                          <AlertTriangle className="mr-1 h-3 w-3" />
-                          Updates Available
-                        </Badge>
-                      )}
-                    </div>
-                    <p className="text-sm text-muted-foreground">Created on {deliverable.createdAt}</p>
-                  </div>
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => setExpandedId(expandedId === deliverable.id ? null : deliverable.id)}
-                      className="rounded-md border-2 border-border bg-white px-4 py-2 text-sm font-semibold text-foreground hover:bg-gray-50 transition-colors"
-                    >
-                      {expandedId === deliverable.id ? "Collapse" : "Expand"}
-                    </button>
-                    <button
-                      onClick={() => setViewingContent(deliverable)}
-                      className="rounded-md border-2 border-[#003A70] bg-[#003A70] px-4 py-2 text-sm font-semibold text-white hover:bg-[#0052A3] transition-colors"
-                    >
-                      View
-                    </button>
-                  </div>
-                </div>
-
-                {/* Details Grid */}
-                <div className="mb-6 grid gap-4 md:grid-cols-3">
-                  <div className="rounded-lg border border-border bg-secondary/30 p-4">
-                    <p className="mb-1 text-xs font-semibold text-muted-foreground">Template</p>
-                    <p className="text-sm font-medium text-foreground">{deliverable.template}</p>
-                  </div>
-                  <div className="rounded-lg border border-border bg-secondary/30 p-4">
-                    <p className="mb-1 text-xs font-semibold text-muted-foreground">Voice</p>
-                    <p className="text-sm font-medium text-foreground">{deliverable.voice}</p>
-                  </div>
-                  <div className="rounded-lg border border-border bg-secondary/30 p-4">
-                    <p className="mb-1 text-xs font-semibold text-muted-foreground">Story Model</p>
-                    <p className="text-sm font-medium text-foreground">{deliverable.storyModel}</p>
-                  </div>
-                </div>
-
-                {/* Update Alert */}
-                {deliverable.hasUpdates && deliverable.updatedElements && (
-                  <div className="rounded-lg border-2 border-yellow-400 bg-yellow-50 p-6">
-                    <div className="mb-4 flex items-center gap-3">
-                      <AlertTriangle className="h-5 w-5 text-yellow-600" />
-                      <h4 className="text-lg font-bold text-yellow-900">Element Updates Detected</h4>
-                    </div>
-                    <p className="mb-4 text-sm text-yellow-800">
-                      The following elements have been updated since this deliverable was created:
-                    </p>
-                    <div className="mb-4 flex flex-wrap gap-2">
-                      {deliverable.updatedElements.map((element, i) => (
-                        <Badge key={i} variant="outline" className="border-yellow-600 text-yellow-900">
-                          {element}
-                        </Badge>
-                      ))}
-                    </div>
-                    <button
-                      onClick={() => handleRefresh(deliverable.id)}
-                      className="flex items-center gap-2 rounded-md bg-yellow-600 px-4 py-2 text-sm font-semibold text-white hover:bg-yellow-700 transition-colors"
-                    >
-                      <RefreshCw className="h-4 w-4" />
-                      Refresh Deliverable
-                    </button>
-                  </div>
-                )}
-
-                {/* Expanded Content */}
-                {expandedId === deliverable.id && deliverable.rendered_content && (
-                  <div className="mt-6 space-y-4 border-t pt-6">
-                    <h4 className="text-lg font-bold text-foreground mb-4">Rendered Content</h4>
-                    {Object.entries(deliverable.rendered_content).map(([section, content]) => (
-                      <div key={section} className="border-b pb-4 last:border-b-0">
-                        <h5 className="text-sm font-semibold text-[#003A70] mb-2">{section}</h5>
-                        <p className="text-sm text-gray-700 leading-relaxed">{content as string}</p>
-                      </div>
-                    ))}
-                  </div>
-                )}
+    <>
+      <div className="min-h-screen bg-background">
+        {/* Header */}
+        <header className="border-b border-border bg-white">
+          <div className="mx-auto max-w-7xl px-6 py-4 lg:px-8">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <Link href="/">
+                  <Button variant="ghost" size="icon" className="h-8 w-8">
+                    <ArrowLeft className="h-4 w-4" />
+                  </Button>
+                </Link>
+                <h1 className="text-2xl font-bold tracking-tight text-[#003A70]">StoryOS</h1>
               </div>
-            ))}
-          </div>
-
-          {/* Empty State (show when no deliverables) */}
-          {deliverables.length === 0 && (
-            <div className="rounded-lg border-2 border-[#003A70]/10 bg-white p-16 text-center shadow-lg">
-              <div className="mb-4 text-6xl">📦</div>
-              <h3 className="mb-2 text-2xl font-bold text-foreground">No deliverables yet</h3>
-              <p className="mb-6 text-lg text-muted-foreground">
-                Create your first deliverable to get started
-              </p>
-              <button className="inline-flex items-center gap-2 rounded-lg bg-[#003A70] px-6 py-3 text-base font-semibold text-white hover:bg-[#0052A3] transition-colors">
-                <Plus className="h-5 w-5" />
-                Create Deliverable
-              </button>
+              <span className="text-sm text-muted-foreground">v1.0.0</span>
             </div>
-          )}
-        </div>
-      </section>
+          </div>
+        </header>
 
-      {/* Footer */}
-      <footer className="border-t border-border bg-white py-8">
-        <div className="mx-auto max-w-7xl px-6 lg:px-8">
-          <p className="text-center text-sm text-muted-foreground">
-            © 2025 StoryOS. Content management for enterprise storytelling.
-          </p>
-        </div>
-      </footer>
+        {/* Page Header */}
+        <section className="border-b border-border bg-white py-12">
+          <div className="mx-auto max-w-7xl px-6 lg:px-8">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-5xl font-bold tracking-tight text-foreground">Deliverables</h2>
+                <p className="mt-4 text-xl text-muted-foreground">{deliverables.length} deliverables</p>
+              </div>
+              <Button
+                onClick={handleCreate}
+                className="bg-[#003A70] hover:bg-[#0052A3] text-base font-semibold px-6 py-3 h-auto"
+              >
+                <Plus className="mr-2 h-5 w-5" />
+                Create Deliverable
+              </Button>
+            </div>
+          </div>
+        </section>
+
+        {/* Deliverables List */}
+        <section className="py-16">
+          <div className="mx-auto max-w-7xl px-6 lg:px-8">
+            {deliverables.length === 0 ? (
+              <div className="rounded-lg border-2 border-[#003A70]/10 bg-white p-16 text-center shadow-lg">
+                <div className="mb-4 text-6xl">📦</div>
+                <h3 className="mb-2 text-2xl font-bold text-foreground">No deliverables yet</h3>
+                <p className="mb-6 text-lg text-muted-foreground">
+                  Create your first deliverable to get started
+                </p>
+                <Button
+                  onClick={handleCreate}
+                  className="bg-[#003A70] hover:bg-[#0052A3] text-base font-semibold"
+                >
+                  <Plus className="mr-2 h-5 w-5" />
+                  Create Deliverable
+                </Button>
+              </div>
+            ) : (
+              <div className="space-y-6">
+                {deliverables.map((deliverable) => (
+                  <div
+                    key={deliverable.id}
+                    className="rounded-lg border-2 border-[#003A70]/10 bg-white p-8 shadow-lg transition-all hover:shadow-xl"
+                  >
+                    {/* Header */}
+                    <div className="mb-6 flex items-start justify-between">
+                      <div className="flex-1">
+                        <h3 className="text-2xl font-bold text-foreground mb-2">{deliverable.name}</h3>
+                        <p className="text-sm text-muted-foreground">
+                          Template v{deliverable.template_version} | Voice v{deliverable.voice_version} | Created {new Date(deliverable.created_at).toLocaleDateString()}
+                        </p>
+                        <Badge className="mt-2 bg-[#003A70] hover:bg-[#0052A3] text-white">
+                          {deliverable.status}
+                        </Badge>
+                      </div>
+                      <div className="flex gap-2">
+                        <Button
+                          onClick={() => setExpandedId(expandedId === deliverable.id ? null : deliverable.id)}
+                          variant="outline"
+                          className="border-2 border-border font-semibold"
+                        >
+                          {expandedId === deliverable.id ? "Collapse" : "Expand"}
+                        </Button>
+                        <Button
+                          onClick={() => setViewingContent(deliverable)}
+                          className="bg-green-600 hover:bg-green-700 text-white font-semibold"
+                        >
+                          View Content
+                        </Button>
+                        <Button
+                          onClick={() => loadDeliverableWithAlerts(deliverable.id)}
+                          className="bg-blue-600 hover:bg-blue-700 text-white font-semibold"
+                        >
+                          <RefreshCw className="mr-2 h-4 w-4" />
+                          Check for Updates
+                        </Button>
+                      </div>
+                    </div>
+
+                    {/* Instance Data */}
+                    {deliverable.instance_data && Object.keys(deliverable.instance_data).length > 0 && (
+                      <div className="mb-6 p-4 bg-gray-50 rounded-lg border-2 border-gray-200">
+                        <p className="text-sm font-bold text-foreground mb-2">Instance Data:</p>
+                        <div className="space-y-1">
+                          {Object.entries(deliverable.instance_data).slice(0, 3).map(([key, value]) => (
+                            <div key={key} className="text-sm text-muted-foreground">
+                              <span className="font-semibold">{key}:</span> {value as string}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Update Alerts */}
+                    {selectedDeliverable?.id === deliverable.id && (
+                      <div className="mb-6">
+                        {alerts && alerts.length > 0 ? (
+                          <div className="rounded-lg border-2 border-yellow-400 bg-yellow-50 p-6">
+                            <div className="mb-4 flex items-center gap-3">
+                              <AlertTriangle className="h-5 w-5 text-yellow-600" />
+                              <h4 className="text-lg font-bold text-yellow-900">
+                                {alerts.length} Update{alerts.length !== 1 ? 's' : ''} Available
+                              </h4>
+                            </div>
+                            <div className="space-y-2">
+                              {alerts.map((alert: any, idx: number) => (
+                                <div key={idx} className="text-sm text-yellow-800">
+                                  <strong>{alert.element_name}:</strong> v{alert.old_version} → v{alert.new_version}
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="rounded-lg border-2 border-green-400 bg-green-50 p-6">
+                            <div className="flex items-center gap-3 text-green-700">
+                              <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
+                                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                              </svg>
+                              <span className="font-bold">Up to date</span>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Expanded Content Preview */}
+                    {expandedId === deliverable.id && deliverable.rendered_content && (
+                      <div className="border-t-2 border-gray-200 pt-6 mt-6 space-y-4">
+                        <h4 className="text-lg font-bold text-foreground mb-4">Rendered Content</h4>
+                        {Object.entries(deliverable.rendered_content).map(([section, content]) => (
+                          <div key={section} className="border-b pb-4 last:border-b-0">
+                            <h5 className="text-sm font-semibold text-[#003A70] mb-2">{section}</h5>
+                            <p className="text-sm text-gray-700 leading-relaxed">{content as string}</p>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </section>
+
+        {/* Footer */}
+        <footer className="border-t border-border bg-white py-8">
+          <div className="mx-auto max-w-7xl px-6 lg:px-8">
+            <p className="text-center text-sm text-muted-foreground">
+              © 2025 StoryOS. Content management for enterprise storytelling.
+            </p>
+          </div>
+        </footer>
+      </div>
 
       {/* Create Deliverable Modal */}
       {showCreateModal && (
-        <div
-          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
-          onClick={() => setShowCreateModal(false)}
-        >
-          <div
-            className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="sticky top-0 bg-white border-b border-gray-200 p-6">
-              <h2 className="text-2xl font-bold text-foreground">Create New Deliverable</h2>
-            </div>
-
-            <div className="p-6">
-              <p className="text-base text-gray-600 mb-6">
-                This is a demo page. To create actual deliverables, please use the full application with backend API access.
-              </p>
-
-              <div className="space-y-4">
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-6">
+          <div className="bg-white rounded-lg shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-8">
+              <h2 className="text-3xl font-bold text-foreground mb-6">Create New Deliverable</h2>
+              <form onSubmit={handleSubmit} className="space-y-6">
                 <div>
-                  <label className="block text-sm font-semibold text-foreground mb-2">
+                  <label className="block text-base font-bold text-foreground mb-3">
                     Deliverable Name
                   </label>
                   <input
                     type="text"
-                    className="w-full px-4 py-2 border-2 border-border rounded-lg focus:border-[#003A70] focus:outline-none"
+                    required
+                    value={formData.name}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg text-base focus:outline-none focus:ring-2 focus:ring-[#003A70] focus:border-[#003A70]"
                     placeholder="e.g., Q4 Product Launch Blog Post"
                   />
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-semibold text-foreground mb-2">
+                    <label className="block text-base font-bold text-foreground mb-3">
                       Template
                     </label>
-                    <select className="w-full px-4 py-2 border-2 border-border rounded-lg focus:border-[#003A70] focus:outline-none">
+                    <select
+                      required
+                      value={formData.template_id}
+                      onChange={(e) => setFormData({ ...formData, template_id: e.target.value })}
+                      className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg text-base focus:outline-none focus:ring-2 focus:ring-[#003A70] focus:border-[#003A70]"
+                    >
                       <option value="">Select template...</option>
-                      <option value="manifesto">Brand Manifesto</option>
-                      <option value="press">Press Release</option>
+                      {templates.map((template) => (
+                        <option key={template.id} value={template.id}>
+                          {template.name} (v{template.version})
+                        </option>
+                      ))}
                     </select>
                   </div>
 
                   <div>
-                    <label className="block text-sm font-semibold text-foreground mb-2">
+                    <label className="block text-base font-bold text-foreground mb-3">
                       Brand Voice
                     </label>
-                    <select className="w-full px-4 py-2 border-2 border-border rounded-lg focus:border-[#003A70] focus:outline-none">
+                    <select
+                      required
+                      value={formData.voice_id}
+                      onChange={(e) => setFormData({ ...formData, voice_id: e.target.value })}
+                      className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg text-base focus:outline-none focus:ring-2 focus:ring-[#003A70] focus:border-[#003A70]"
+                    >
                       <option value="">Select voice...</option>
-                      <option value="corporate">Corporate Brand Voice</option>
-                      <option value="product">Product Division Voice</option>
+                      {voices.map((voice) => (
+                        <option key={voice.id} value={voice.id}>
+                          {voice.name} (v{voice.version})
+                        </option>
+                      ))}
                     </select>
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-semibold text-foreground mb-2">
-                    Story Model
+                  <label className="block text-base font-bold text-foreground mb-3">
+                    Select Elements to Include
                   </label>
-                  <select className="w-full px-4 py-2 border-2 border-border rounded-lg focus:border-[#003A70] focus:outline-none">
-                    <option value="">Select story model...</option>
-                    <option value="narrative">Brand Narrative Framework</option>
-                    <option value="news">News Story Framework</option>
-                  </select>
-                </div>
-
-                <div className="bg-blue-50 border-2 border-blue-200 rounded-lg p-4">
-                  <p className="text-sm text-blue-900">
-                    <strong>Note:</strong> In the full application, you would select UNF elements to include in your deliverable. This demo shows the static UI only.
+                  <div className="border-2 border-gray-300 rounded-lg p-4 max-h-60 overflow-y-auto">
+                    {elements.length === 0 ? (
+                      <p className="text-gray-500 text-sm">No approved elements available</p>
+                    ) : (
+                      <div className="space-y-2">
+                        {elements.map((element) => (
+                          <label
+                            key={element.id}
+                            className="flex items-start gap-3 p-2 hover:bg-gray-50 rounded cursor-pointer"
+                          >
+                            <input
+                              type="checkbox"
+                              checked={formData.selected_elements.includes(element.id)}
+                              onChange={() => toggleElement(element.id)}
+                              className="mt-1"
+                            />
+                            <div className="flex-1">
+                              <div className="font-semibold text-sm text-foreground">{element.name}</div>
+                              <div className="text-xs text-muted-foreground">v{element.version} - {element.content.substring(0, 60)}...</div>
+                            </div>
+                          </label>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-2">
+                    {formData.selected_elements.length} element(s) selected
                   </p>
                 </div>
-              </div>
-            </div>
 
-            <div className="sticky bottom-0 bg-white border-t border-gray-200 p-6 flex justify-end gap-3">
-              <button
-                onClick={() => setShowCreateModal(false)}
-                className="px-6 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors font-semibold"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={() => setShowCreateModal(false)}
-                className="px-6 py-2 bg-[#003A70] text-white rounded-lg hover:bg-[#0052A3] transition-colors font-semibold"
-              >
-                Create Deliverable
-              </button>
+                <div className="flex gap-4 justify-end pt-4 border-t-2">
+                  <Button
+                    type="button"
+                    onClick={() => setShowCreateModal(false)}
+                    variant="outline"
+                    className="px-6 py-3 text-base font-semibold border-2"
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    type="submit"
+                    className="px-6 py-3 bg-[#003A70] hover:bg-[#0052A3] text-base font-semibold"
+                  >
+                    Create Deliverable
+                  </Button>
+                </div>
+              </form>
             </div>
           </div>
         </div>
@@ -307,19 +446,13 @@ export default function DeliverablesPage() {
 
       {/* View Content Modal */}
       {viewingContent && (
-        <div
-          className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4"
-          onClick={() => setViewingContent(null)}
-        >
-          <div
-            className="bg-white rounded-lg max-w-3xl w-full max-h-[90vh] overflow-y-auto"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="sticky top-0 bg-white border-b border-gray-200 p-6 flex items-start justify-between">
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-6">
+          <div className="bg-white rounded-lg shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="sticky top-0 bg-white border-b-2 border-gray-200 p-8 flex items-start justify-between">
               <div>
                 <h2 className="text-2xl font-bold text-foreground">{viewingContent.name}</h2>
                 <p className="text-sm text-muted-foreground mt-1">
-                  Template: {viewingContent.template} | Voice: {viewingContent.voice}
+                  Template: v{viewingContent.template_version} | Voice: v{viewingContent.voice_version} | Status: {viewingContent.status}
                 </p>
               </div>
               <button
@@ -330,26 +463,43 @@ export default function DeliverablesPage() {
               </button>
             </div>
 
-            <div className="p-6 space-y-6">
-              {viewingContent.rendered_content && Object.entries(viewingContent.rendered_content).map(([section, content]) => (
-                <div key={section} className="border-b pb-4 last:border-b-0">
-                  <h3 className="text-lg font-semibold text-[#003A70] mb-3">{section}</h3>
-                  <p className="text-base text-gray-700 leading-relaxed">{content as string}</p>
+            <div className="p-8 space-y-6">
+              {viewingContent.rendered_content && Object.keys(viewingContent.rendered_content).length > 0 ? (
+                Object.entries(viewingContent.rendered_content).map(([section, content]) => (
+                  <div key={section} className="border-b-2 pb-6 last:border-b-0">
+                    <h3 className="text-lg font-semibold text-[#003A70] mb-3">{section}</h3>
+                    <div className="prose prose-base max-w-none prose-headings:text-foreground prose-p:text-muted-foreground prose-strong:text-foreground">
+                      <ReactMarkdown
+                        components={{
+                          p: ({ children }) => <p className="mb-3">{children}</p>,
+                          ul: ({ children }) => <ul className="list-disc pl-6 space-y-1.5">{children}</ul>,
+                          ol: ({ children }) => <ol className="list-decimal pl-6 space-y-1.5">{children}</ol>,
+                        }}
+                      >
+                        {content as string}
+                      </ReactMarkdown>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className="text-center text-gray-500 py-8">
+                  No rendered content available
                 </div>
-              ))}
+              )}
             </div>
 
-            <div className="sticky bottom-0 bg-white border-t border-gray-200 p-6 flex justify-end">
-              <button
+            <div className="sticky bottom-0 bg-white border-t-2 border-gray-200 p-8 flex justify-end">
+              <Button
                 onClick={() => setViewingContent(null)}
-                className="px-6 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
+                variant="outline"
+                className="px-6 py-3 text-base font-semibold border-2"
               >
                 Close
-              </button>
+              </Button>
             </div>
           </div>
         </div>
       )}
-    </div>
+    </>
   )
 }
