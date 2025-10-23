@@ -90,7 +90,8 @@ export function DemoProvider({ children }: { children: ReactNode }) {
       // Fetch with alerts to get full metadata
       const withAlerts = await deliverablesAPI.getDeliverableWithAlerts(response.data.id);
 
-      setDeliverables(prev => [...prev, withAlerts.data]);
+      // Add new deliverable to the top of the list
+      setDeliverables(prev => [withAlerts.data, ...prev]);
       return { success: true, deliverable: withAlerts.data };
 
     } catch (error: any) {

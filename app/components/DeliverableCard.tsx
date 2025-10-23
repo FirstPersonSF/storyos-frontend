@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { useDemo } from '../context/DemoContext';
 import ProvenanceViewer from './ProvenanceViewer';
@@ -16,6 +16,15 @@ export default function DeliverableCard({ deliverable }: DeliverableCardProps) {
   const [showProvenance, setShowProvenance] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [showChangelog, setShowChangelog] = useState(false);
+  const [showSuccessMessage, setShowSuccessMessage] = useState(false);
+  const editSectionRef = useRef<HTMLDivElement>(null);
+
+  // Scroll to edit section when editing mode is enabled
+  useEffect(() => {
+    if (isEditing && editSectionRef.current) {
+      editSectionRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }, [isEditing]);
 
   // Get voice styling - using v0 color palette
   const isCorporate = deliverable.voice_id === '00a2f89d-0b2a-465c-b85a-29fbc4cc1b7e';
@@ -55,6 +64,9 @@ export default function DeliverableCard({ deliverable }: DeliverableCardProps) {
     const result = await updateDeliverableStoryModel(deliverable.id, newModelId, instanceData);
     if (result.success) {
       setIsEditing(false);
+      setShowSuccessMessage(true);
+      // Hide success message after 3 seconds
+      setTimeout(() => setShowSuccessMessage(false), 3000);
     }
   };
 
@@ -122,6 +134,15 @@ export default function DeliverableCard({ deliverable }: DeliverableCardProps) {
             </button>
           </div>
         </div>
+
+        {/* Success Message */}
+        {showSuccessMessage && (
+          <div className="mt-4 p-4 bg-green-50 border-2 border-green-500 rounded-lg">
+            <p className="text-sm font-bold text-green-800">
+              ✅ Story model change saved successfully! New version created.
+            </p>
+          </div>
+        )}
 
         {/* Impact Alerts */}
         {deliverable.alerts && deliverable.alerts.length > 0 && (
@@ -266,7 +287,11 @@ export default function DeliverableCard({ deliverable }: DeliverableCardProps) {
 
       {/* Edit Mode */}
       {isEditing && (
-        <div className="border-t-2 bg-gray-50 p-6">
+        <div
+          ref={editSectionRef}
+          className="border-t-2 bg-yellow-50 border-yellow-300 p-6 animate-pulse"
+          style={{ animationIterationCount: '2', animationDuration: '0.5s' }}
+        >
           <StoryModelSelector
             deliverableId={deliverable.id}
             currentModelId={deliverable.story_model_id}

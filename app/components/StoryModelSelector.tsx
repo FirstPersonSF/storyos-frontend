@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useDemo } from '../context/DemoContext';
 import { templatesAPI } from '@/lib/api/client';
 
@@ -26,9 +26,17 @@ export default function StoryModelSelector({
   const [instanceData, setInstanceData] = useState(currentInstanceData || {});
   const [instanceFields, setInstanceFields] = useState<any[]>([]);
   const [loadingFields, setLoadingFields] = useState(false);
+  const confirmSectionRef = useRef<HTMLDivElement>(null);
 
   // Get template for selected story model
   const selectedTemplate = templates.find(t => t.story_model_id === selectedModelId);
+
+  // Scroll to confirm section when it appears
+  useEffect(() => {
+    if (showConfirm && confirmSectionRef.current) {
+      confirmSectionRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }, [showConfirm]);
 
   const handleSave = async () => {
     if (selectedModelId === currentModelId) {
@@ -178,7 +186,7 @@ export default function StoryModelSelector({
           </div>
         </div>
       ) : (
-        <div className="bg-yellow-50 border-2 border-yellow-300 rounded-lg p-6">
+        <div ref={confirmSectionRef} className="bg-yellow-50 border-2 border-yellow-300 rounded-lg p-6">
           <p className="text-base text-yellow-800 mb-4 font-semibold">
             ⚠️ Changing the story model will reflow sections. Some content may need to be remapped.
           </p>
