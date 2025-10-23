@@ -35,10 +35,10 @@ This document explains the successful workflow we established for building the S
 ### Phase 2: Extend with Claude Code
 
 3. **Pull changes locally**
-   ```bash
+   \`\`\`bash
    cd /Users/drewf/Desktop/Python/storyos-frontend-vercel/storyos-frontend-vercel
    git pull origin main
-   ```
+   \`\`\`
 
 4. **Claude Code adds functionality**
    - Add interactive features (modals, state management)
@@ -47,11 +47,11 @@ This document explains the successful workflow we established for building the S
    - Connect components to backend APIs (when available)
 
 5. **Commit and push**
-   ```bash
+   \`\`\`bash
    git add .
    git commit -m "Descriptive message"
    git push origin main
-   ```
+   \`\`\`
 
 ### Phase 3: Automatic Deployment
 
@@ -164,7 +164,7 @@ This document explains the successful workflow we established for building the S
 - Basic component structure
 
 **Claude Code Adds:**
-```typescript
+\`\`\`typescript
 // State management
 const [expandedId, setExpandedId] = useState<number | null>(null)
 
@@ -179,7 +179,7 @@ const handleRefresh = (deliverableId: number) => {
 {expandedId === deliverable.id && (
   <div>Expanded content...</div>
 )}
-```
+\`\`\`
 
 ## Design System
 
@@ -224,7 +224,7 @@ const handleRefresh = (deliverableId: number) => {
 **Cause:** v0 and local changes diverged
 
 **Solution:**
-```bash
+\`\`\`bash
 git pull origin main --allow-unrelated-histories --no-rebase
 git checkout --ours .  # Keep your changes
 # OR
@@ -232,24 +232,24 @@ git checkout --theirs .  # Keep v0 changes
 git add .
 git commit -m "Merge remote changes"
 git push origin main
-```
+\`\`\`
 
 ### Issue: Parsing Errors
 
 **Cause:** Curly quotes in JSX (`""` instead of `""`)
 
 **Solution:** Replace curly quotes with straight quotes or escaped quotes:
-```typescript
+\`\`\`typescript
 // Wrong
 description: "Click "Provenance" to see details"
 
 // Right
 description: "Click \"Provenance\" to see details"
-```
+\`\`\`
 
 ## Repository Structure
 
-```
+\`\`\`
 storyos-frontend-vercel/storyos-frontend-vercel/
 ├── app/
 │   ├── page.tsx                 # Homepage (v0 + extended)
@@ -272,12 +272,12 @@ storyos-frontend-vercel/storyos-frontend-vercel/
 ├── package.json                # Dependencies
 ├── tsconfig.json              # TypeScript config
 └── tailwind.config.ts         # Tailwind config
-```
+\`\`\`
 
 ## Commands Reference
 
 ### Local Development
-```bash
+\`\`\`bash
 # Install dependencies
 pnpm install
 
@@ -286,10 +286,10 @@ pnpm dev
 
 # Build for production
 pnpm build
-```
+\`\`\`
 
 ### Git Operations
-```bash
+\`\`\`bash
 # Pull v0 changes
 git pull origin main
 
@@ -307,10 +307,10 @@ git status
 
 # View recent commits
 git log --oneline -5
-```
+\`\`\`
 
 ### Vercel CLI (Optional)
-```bash
+\`\`\`bash
 # Install Vercel CLI
 npm i -g vercel
 
@@ -319,13 +319,13 @@ vercel
 
 # Check deployment status
 vercel ls
-```
+\`\`\`
 
 ## Best Practices
 
 ### 1. Commit Messages
 Use descriptive commit messages that explain what changed and why:
-```bash
+\`\`\`bash
 # Good
 git commit -m "Add Create Deliverable modal
 
@@ -335,26 +335,26 @@ git commit -m "Add Create Deliverable modal
 
 # Bad
 git commit -m "Update page"
-```
+\`\`\`
 
 ### 2. Pull Before Push
 Always pull the latest changes from GitHub before pushing:
-```bash
+\`\`\`bash
 git pull origin main
 # Make your changes
 git add .
 git commit -m "Message"
 git push origin main
-```
+\`\`\`
 
 ### 3. Test Locally First
 Test functionality locally before pushing to production:
-```bash
+\`\`\`bash
 pnpm dev
 # Visit http://localhost:3000
 # Test all interactive features
 # Then push to GitHub
-```
+\`\`\`
 
 ### 4. Design System Consistency
 When adding new components with Claude Code, match the v0 design system:

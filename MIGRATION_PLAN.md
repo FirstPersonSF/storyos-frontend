@@ -45,7 +45,7 @@ We're migrating 5 core features from the original React app to the Vercel Next.j
 
 ## Key Files to Create
 
-```
+\`\`\`
 storyos-frontend-vercel/storyos-frontend-vercel/
 ├── lib/
 │   └── api/
@@ -58,7 +58,7 @@ storyos-frontend-vercel/storyos-frontend-vercel/
 │       ├── ProvenanceViewer.tsx
 │       ├── StoryModelSelector.tsx
 │       └── VoiceTransformationDisplay.tsx
-```
+\`\`\`
 
 ## Backend API Endpoints
 
