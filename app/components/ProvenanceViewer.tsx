@@ -135,6 +135,8 @@ export default function ProvenanceViewer({ deliverable }: ProvenanceViewerProps)
                 {versions.map((version: any, index: number) => {
                   const isCurrentVersion = version.id === deliverable.id;
                   const versionStoryModel = getStoryModelName(version.story_model_id);
+                  const versionVoice = voices.find(v => v.id === version.voice_id);
+                  const versionVoiceName = versionVoice ? `${versionVoice.name} v${version.voice_version}` : `v${version.voice_version}`;
 
                   return (
                     <div
@@ -169,7 +171,7 @@ export default function ProvenanceViewer({ deliverable }: ProvenanceViewerProps)
                       </div>
                       <div className="text-xs text-gray-600 space-y-1">
                         <div><span className="font-semibold">Story Model:</span> {versionStoryModel}</div>
-                        <div><span className="font-semibold">Voice:</span> v{version.voice_version}</div>
+                        <div><span className="font-semibold">Voice:</span> {versionVoiceName}</div>
                         {version.prev_deliverable_id && (
                           <div className="text-xs text-gray-400 mt-1">
                             ↑ Supersedes previous version
