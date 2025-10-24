@@ -11,7 +11,7 @@ interface DeliverableCardProps {
 }
 
 export default function DeliverableCard({ deliverable }: DeliverableCardProps) {
-  const { refreshDeliverable, deleteDeliverable, updateDeliverableStoryModel, updateDeliverableVoice } = useDemo();
+  const { voices, refreshDeliverable, deleteDeliverable, updateDeliverableStoryModel, updateDeliverableVoice } = useDemo();
   const [isExpanded, setIsExpanded] = useState(false);
   const [showProvenance, setShowProvenance] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
