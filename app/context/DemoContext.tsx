@@ -40,17 +40,22 @@ export function DemoProvider({ children }: { children: ReactNode }) {
   async function loadInitialData() {
     setLoading(true);
     try {
-      const [templatesRes, voicesRes, elementsRes, storyModelsRes, deliverablesRes] = await Promise.all([
+      // Load both approved and superseded elements for complete provenance records
+      const [templatesRes, voicesRes, approvedElementsRes, supersededElementsRes, storyModelsRes, deliverablesRes] = await Promise.all([
         templatesAPI.getTemplates(),
         voicesAPI.getVoices(),
         unfAPI.getElements({ status: 'approved' }),
+        unfAPI.getElements({ status: 'superseded' }),
         storyModelsAPI.getStoryModels(),
         deliverablesAPI.getDeliverables()
       ]);
 
+      // Combine approved and superseded elements
+      const allElements = [...approvedElementsRes.data, ...supersededElementsRes.data];
+
       setTemplates(templatesRes.data);
       setVoices(voicesRes.data);
-      setElements(elementsRes.data);
+      setElements(allElements);
       setStoryModels(storyModelsRes.data);
 
       // Fetch alerts for each deliverable
@@ -158,9 +163,12 @@ export function DemoProvider({ children }: { children: ReactNode }) {
       console.log('Updating element:', elementId);
       await unfAPI.updateElement(elementId, { content });
 
-      // Reload elements
-      const elementsRes = await unfAPI.getElements({ status: 'approved' });
-      setElements(elementsRes.data);
+      // Reload elements (both approved and superseded)
+      const [approvedRes, supersededRes] = await Promise.all([
+        unfAPI.getElements({ status: 'approved' }),
+        unfAPI.getElements({ status: 'superseded' })
+      ]);
+      setElements([...approvedRes.data, ...supersededRes.data]);
 
       // Reload all deliverables with alerts
       const updatedPromises = deliverables.map(d =>
