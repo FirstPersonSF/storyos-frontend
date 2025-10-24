@@ -150,8 +150,10 @@ export default function DeliverableCard({ deliverable }: DeliverableCardProps) {
               <span className="px-3 py-1 bg-gray-600 text-white rounded-lg font-semibold flex items-center">
                 {deliverable.status}
               </span>
-              <span className="px-3 py-1 bg-purple-600 text-white rounded-lg font-semibold flex items-center">
-                v{deliverable.version}
+              <span className={`px-3 py-1 ${deliverable.status === 'superseded' ? 'bg-gray-500' : 'bg-purple-600'} text-white rounded-lg font-semibold flex items-center gap-1.5`}>
+                <span>v{deliverable.version}</span>
+                {deliverable.status === 'superseded' && <span className="text-xs opacity-75">(Old)</span>}
+                {deliverable.status !== 'superseded' && <span className="text-xs opacity-75">(Latest)</span>}
               </span>
               {validationLog.length > 0 && (
                 <span className={`px-3 py-1 ${failedValidations.length > 0 ? 'bg-red-600' : 'bg-green-600'} text-white rounded-lg font-semibold flex items-center gap-1.5`}>
