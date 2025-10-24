@@ -17,6 +17,7 @@ interface DemoContextType {
   deleteDeliverable: (deliverableId: string) => Promise<{ success: boolean; error?: string }>;
   updateElement: (elementId: string, content: string) => Promise<{ success: boolean; error?: string }>;
   updateDeliverableStoryModel: (deliverableId: string, newStoryModelId: string, instanceData?: any) => Promise<{ success: boolean; error?: string }>;
+  updateDeliverableVoice: (deliverableId: string, newVoiceId: string) => Promise<{ success: boolean; error?: string }>;
   loadInitialData: () => Promise<void>;
 }
 
@@ -211,6 +212,34 @@ export function DemoProvider({ children }: { children: ReactNode }) {
     }
   }
 
+  async function updateDeliverableVoice(deliverableId: string, newVoiceId: string) {
+    setLoading(true);
+    try {
+      // Update deliverable with new voice
+      const updatePayload: any = {
+        voice_id: newVoiceId
+      };
+
+      await deliverablesAPI.updateDeliverable(deliverableId, updatePayload);
+
+      // Refresh to re-render content with new voice
+      await deliverablesAPI.refreshDeliverable(deliverableId);
+
+      // Fetch with alerts
+      const withAlerts = await deliverablesAPI.getDeliverableWithAlerts(deliverableId);
+
+      setDeliverables(prev =>
+        prev.map(d => d.id === deliverableId ? withAlerts.data : d)
+      );
+      return { success: true };
+    } catch (error: any) {
+      console.error('Failed to update voice:', error);
+      return { success: false, error: error.message };
+    } finally {
+      setLoading(false);
+    }
+  }
+
   const value: DemoContextType = {
     templates,
     voices,
@@ -225,6 +254,7 @@ export function DemoProvider({ children }: { children: ReactNode }) {
     deleteDeliverable,
     updateElement,
     updateDeliverableStoryModel,
+    updateDeliverableVoice,
     loadInitialData
   };
 

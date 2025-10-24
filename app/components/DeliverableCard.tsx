@@ -11,7 +11,7 @@ interface DeliverableCardProps {
 }
 
 export default function DeliverableCard({ deliverable }: DeliverableCardProps) {
-  const { refreshDeliverable, deleteDeliverable, updateDeliverableStoryModel } = useDemo();
+  const { refreshDeliverable, deleteDeliverable, updateDeliverableStoryModel, updateDeliverableVoice } = useDemo();
   const [isExpanded, setIsExpanded] = useState(false);
   const [showProvenance, setShowProvenance] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
@@ -70,6 +70,16 @@ export default function DeliverableCard({ deliverable }: DeliverableCardProps) {
     }
   };
 
+  const handleVoiceChange = async (newVoiceId: string) => {
+    const result = await updateDeliverableVoice(deliverable.id, newVoiceId);
+    if (result.success) {
+      setIsEditing(false);
+      setShowSuccessMessage(true);
+      // Hide success message after 3 seconds
+      setTimeout(() => setShowSuccessMessage(false), 3000);
+    }
+  };
+
   // Parse rendered content
   const renderedContent = typeof deliverable.rendered_content === 'string'
     ? JSON.parse(deliverable.rendered_content)
@@ -81,6 +91,11 @@ export default function DeliverableCard({ deliverable }: DeliverableCardProps) {
       ? JSON.parse(deliverable.metadata.transformation_notes)
       : deliverable.metadata.transformation_notes)
     : null;
+
+  // Parse validation log if available
+  const validationLog = deliverable.validation_log || [];
+  const failedValidations = validationLog.filter((v: any) => !v.passed);
+  const passedValidations = validationLog.filter((v: any) => v.passed);
 
   return (
     <div className={`bg-white rounded-lg shadow-lg border-2 ${voiceStyles.border} overflow-hidden`}>
@@ -103,6 +118,11 @@ export default function DeliverableCard({ deliverable }: DeliverableCardProps) {
               <span className="px-3 py-1 bg-purple-600 text-white rounded-lg font-semibold flex items-center">
                 v{deliverable.version}
               </span>
+              {validationLog.length > 0 && (
+                <span className={`px-3 py-1 ${failedValidations.length > 0 ? 'bg-red-600' : 'bg-green-600'} text-white rounded-lg font-semibold flex items-center gap-1.5`}>
+                  {failedValidations.length > 0 ? '⚠️' : '✓'} Validation {failedValidations.length > 0 ? `(${failedValidations.length} issues)` : 'Passed'}
+                </span>
+              )}
             </div>
           </div>
 
@@ -193,6 +213,63 @@ export default function DeliverableCard({ deliverable }: DeliverableCardProps) {
             </div>
           ))}
 
+          {/* Validation Results Section */}
+          {validationLog.length > 0 && (
+            <div className="border-t-4 border-gray-300 pt-6 mt-8">
+              <h3 className="text-xl font-bold text-[#003A70] mb-4">
+                {failedValidations.length > 0 ? '⚠️' : '✓'} Validation Results
+              </h3>
+              <p className="text-sm text-muted-foreground mb-4">
+                Automated checks ensuring content meets quality standards and template requirements
+              </p>
+
+              {/* Failed Validations */}
+              {failedValidations.length > 0 && (
+                <div className="mb-6">
+                  <h4 className="text-lg font-semibold text-red-900 mb-3">
+                    Issues Found ({failedValidations.length})
+                  </h4>
+                  <div className="space-y-3">
+                    {failedValidations.map((validation: any, idx: number) => (
+                      <div key={idx} className="bg-red-50 border-2 border-red-300 rounded-lg p-4">
+                        <div className="flex items-start gap-3">
+                          <span className="text-red-600 text-xl">❌</span>
+                          <div className="flex-1">
+                            <h5 className="text-sm font-semibold text-red-900 mb-1">
+                              {validation.rule.replace(/_/g, ' ').replace(/\b\w/g, (l: string) => l.toUpperCase())}
+                            </h5>
+                            <p className="text-sm text-red-800">{validation.message}</p>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Passed Validations Summary */}
+              {passedValidations.length > 0 && (
+                <div>
+                  <h4 className="text-lg font-semibold text-green-900 mb-3">
+                    Passed Checks ({passedValidations.length})
+                  </h4>
+                  <div className="bg-green-50 border-2 border-green-200 rounded-lg p-4">
+                    <div className="grid grid-cols-2 gap-2">
+                      {passedValidations.map((validation: any, idx: number) => (
+                        <div key={idx} className="flex items-center gap-2">
+                          <span className="text-green-600">✓</span>
+                          <span className="text-sm text-green-800">
+                            {validation.rule.replace(/_/g, ' ').replace(/\b\w/g, (l: string) => l.toUpperCase())}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
           {/* Transformation Notes Section */}
           {transformationNotes && Object.keys(transformationNotes).length > 0 && (
             <div className="border-t-4 border-gray-300 pt-6 mt-8">
@@ -236,8 +313,10 @@ export default function DeliverableCard({ deliverable }: DeliverableCardProps) {
           <StoryModelSelector
             deliverableId={deliverable.id}
             currentModelId={deliverable.story_model_id}
+            currentVoiceId={deliverable.voice_id}
             currentInstanceData={deliverable.instance_data}
             onModelChange={handleStoryModelChange}
+            onVoiceChange={handleVoiceChange}
             onCancel={() => setIsEditing(false)}
           />
         </div>

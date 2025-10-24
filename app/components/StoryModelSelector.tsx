@@ -7,20 +7,25 @@ import { templatesAPI } from '@/lib/api/client';
 interface StoryModelSelectorProps {
   deliverableId: string;
   currentModelId: string;
+  currentVoiceId: string;
   currentInstanceData: any;
   onModelChange: (newModelId: string, instanceData?: any) => Promise<void>;
+  onVoiceChange: (newVoiceId: string) => Promise<void>;
   onCancel: () => void;
 }
 
 export default function StoryModelSelector({
   deliverableId,
   currentModelId,
+  currentVoiceId,
   currentInstanceData,
   onModelChange,
+  onVoiceChange,
   onCancel
 }: StoryModelSelectorProps) {
-  const { storyModels, templates } = useDemo();
+  const { storyModels, templates, voices } = useDemo();
   const [selectedModelId, setSelectedModelId] = useState(currentModelId);
+  const [selectedVoiceId, setSelectedVoiceId] = useState(currentVoiceId);
   const [showConfirm, setShowConfirm] = useState(false);
   const [showInstanceFields, setShowInstanceFields] = useState(false);
   const [instanceData, setInstanceData] = useState(currentInstanceData || {});
@@ -39,12 +44,23 @@ export default function StoryModelSelector({
   }, [showConfirm]);
 
   const handleSave = async () => {
-    if (selectedModelId === currentModelId) {
+    const modelChanged = selectedModelId !== currentModelId;
+    const voiceChanged = selectedVoiceId !== currentVoiceId;
+
+    // If nothing changed, just cancel
+    if (!modelChanged && !voiceChanged) {
       onCancel();
       return;
     }
 
-    // Check if new story model's template has instance fields
+    // If only voice changed, handle it immediately
+    if (voiceChanged && !modelChanged) {
+      await onVoiceChange(selectedVoiceId);
+      // Don't call onCancel() - let parent component handle UI state
+      return;
+    }
+
+    // If model changed, check if new story model's template has instance fields
     if (selectedTemplate && selectedTemplate.instance_fields && selectedTemplate.instance_fields.length > 0) {
       setInstanceFields(selectedTemplate.instance_fields);
       setShowInstanceFields(true);
@@ -68,8 +84,21 @@ export default function StoryModelSelector({
     setShowConfirm(true);
   };
 
-  const handleConfirm = () => {
-    onModelChange(selectedModelId, instanceData);
+  const handleConfirm = async () => {
+    const modelChanged = selectedModelId !== currentModelId;
+    const voiceChanged = selectedVoiceId !== currentVoiceId;
+
+    // Handle model change first if needed
+    if (modelChanged) {
+      await onModelChange(selectedModelId, instanceData);
+    }
+
+    // Handle voice change if needed and model didn't change
+    // (if model changed, voice stays the same)
+    if (voiceChanged && !modelChanged) {
+      await onVoiceChange(selectedVoiceId);
+    }
+
     setShowConfirm(false);
   };
 
@@ -82,21 +111,45 @@ export default function StoryModelSelector({
 
   return (
     <div className="border-t-2 border-gray-200 pt-6 mt-6">
-      <h4 className="text-lg font-bold text-foreground mb-4">Change Story Model</h4>
+      <h4 className="text-lg font-bold text-foreground mb-4">Edit Deliverable</h4>
 
       {!showInstanceFields && !showConfirm ? (
         <div className="space-y-4">
-          <select
-            value={selectedModelId}
-            onChange={(e) => setSelectedModelId(e.target.value)}
-            className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg text-base focus:border-[#003A70] focus:outline-none focus:ring-2 focus:ring-[#003A70]/20"
-          >
-            {storyModels.map(model => (
-              <option key={model.id} value={model.id}>
-                {model.name}
-              </option>
-            ))}
-          </select>
+          {/* Story Model Selector */}
+          <div>
+            <label className="block text-sm font-semibold text-foreground mb-2">
+              Story Model
+            </label>
+            <select
+              value={selectedModelId}
+              onChange={(e) => setSelectedModelId(e.target.value)}
+              className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg text-base focus:border-[#003A70] focus:outline-none focus:ring-2 focus:ring-[#003A70]/20"
+            >
+              {storyModels.map(model => (
+                <option key={model.id} value={model.id}>
+                  {model.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Voice Selector */}
+          <div>
+            <label className="block text-sm font-semibold text-foreground mb-2">
+              Brand Voice
+            </label>
+            <select
+              value={selectedVoiceId}
+              onChange={(e) => setSelectedVoiceId(e.target.value)}
+              className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg text-base focus:border-[#003A70] focus:outline-none focus:ring-2 focus:ring-[#003A70]/20"
+            >
+              {voices.map(voice => (
+                <option key={voice.id} value={voice.id}>
+                  {voice.name}
+                </option>
+              ))}
+            </select>
+          </div>
 
           {selectedTemplate && (
             <div className="text-sm text-gray-600 bg-gray-50 p-3 rounded-lg">
