@@ -69,9 +69,10 @@ export default function DeliverableCard({ deliverable }: DeliverableCardProps) {
       const result = await updateDeliverableStoryModel(deliverable.id, newModelId, instanceData);
       if (result.success) {
         setIsEditing(false);
+        setIsExpanded(true); // Auto-expand to show updated content
         setShowSuccessMessage(true);
-        // Hide success message after 3 seconds
-        setTimeout(() => setShowSuccessMessage(false), 3000);
+        // Hide success message after 5 seconds
+        setTimeout(() => setShowSuccessMessage(false), 5000);
       }
     } finally {
       setIsUpdating(false);
@@ -84,9 +85,10 @@ export default function DeliverableCard({ deliverable }: DeliverableCardProps) {
       const result = await updateDeliverableVoice(deliverable.id, newVoiceId);
       if (result.success) {
         setIsEditing(false);
+        setIsExpanded(true); // Auto-expand to show updated content
         setShowSuccessMessage(true);
-        // Hide success message after 3 seconds
-        setTimeout(() => setShowSuccessMessage(false), 3000);
+        // Hide success message after 5 seconds
+        setTimeout(() => setShowSuccessMessage(false), 5000);
       }
     } finally {
       setIsUpdating(false);
@@ -172,7 +174,7 @@ export default function DeliverableCard({ deliverable }: DeliverableCardProps) {
         {showSuccessMessage && (
           <div className="mt-4 p-4 bg-green-50 border-2 border-green-500 rounded-lg">
             <p className="text-sm font-bold text-green-800">
-              ✅ Story model change saved successfully! New version created.
+              ✅ Update saved successfully! Deliverable has been refreshed with the latest changes.
             </p>
           </div>
         )}
