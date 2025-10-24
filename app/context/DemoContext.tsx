@@ -60,11 +60,19 @@ export function DemoProvider({ children }: { children: ReactNode }) {
 
       // Fetch all deliverables with alerts in a single efficient API call
       const deliverablesWithAlertsRes = await deliverablesAPI.getDeliverablesWithAlerts();
-      setDeliverables(deliverablesWithAlertsRes.data);
+
+      // Progressive loading: display deliverables one by one with a slight delay
+      const allDeliverables = deliverablesWithAlertsRes.data;
+      setLoading(false); // Hide loading state to start showing skeleton cards
+
+      // Add deliverables progressively with 100ms delay between each
+      for (let i = 0; i < allDeliverables.length; i++) {
+        await new Promise(resolve => setTimeout(resolve, 100));
+        setDeliverables(prev => [...prev, allDeliverables[i]]);
+      }
     } catch (err: any) {
       setError(err.message);
       console.error('Failed to load initial data:', err);
-    } finally {
       setLoading(false);
     }
   }

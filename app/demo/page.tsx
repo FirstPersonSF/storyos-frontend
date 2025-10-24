@@ -460,7 +460,23 @@ function DemoPageContent() {
             <div className="mb-12 text-center">
               <h3 className="mb-4 text-3xl font-bold tracking-tight text-foreground lg:text-4xl">Deliverables</h3>
             </div>
-            {deliverables.length > 0 ? (
+            {loading ? (
+              <div className="space-y-6">
+                {/* Skeleton loading cards */}
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="bg-white rounded-lg shadow-lg border-2 border-gray-200 overflow-hidden animate-pulse">
+                    <div className="bg-gray-100 px-6 py-4 border-b-2 border-gray-200">
+                      <div className="h-6 bg-gray-300 rounded w-1/3 mb-3"></div>
+                      <div className="flex gap-2">
+                        <div className="h-6 w-20 bg-gray-300 rounded"></div>
+                        <div className="h-6 w-24 bg-gray-300 rounded"></div>
+                        <div className="h-6 w-16 bg-gray-300 rounded"></div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : deliverables.length > 0 ? (
               <div className="space-y-6">
                 {deliverables.map((deliverable) => (
                   <DeliverableCard key={deliverable.id} deliverable={deliverable} />
