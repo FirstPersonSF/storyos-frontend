@@ -58,18 +58,25 @@ export function DemoProvider({ children }: { children: ReactNode }) {
       setElements(allElements);
       setStoryModels(storyModelsRes.data);
 
-      // Fetch alerts for each deliverable
-      const deliverablesWithAlerts = await Promise.all(
-        deliverablesRes.data.map(async (d: any) => {
-          try {
-            const withAlerts = await deliverablesAPI.getDeliverableWithAlerts(d.id);
-            return withAlerts.data;
-          } catch (err) {
-            console.error(`Failed to load alerts for deliverable ${d.id}:`, err);
-            return d;
-          }
-        })
-      );
+      // Fetch alerts for each deliverable in batches to avoid overwhelming the database connection pool
+      const BATCH_SIZE = 3;
+      const deliverablesWithAlerts: any[] = [];
+
+      for (let i = 0; i < deliverablesRes.data.length; i += BATCH_SIZE) {
+        const batch = deliverablesRes.data.slice(i, i + BATCH_SIZE);
+        const batchResults = await Promise.all(
+          batch.map(async (d: any) => {
+            try {
+              const withAlerts = await deliverablesAPI.getDeliverableWithAlerts(d.id);
+              return withAlerts.data;
+            } catch (err) {
+              console.error(`Failed to load alerts for deliverable ${d.id}:`, err);
+              return d;
+            }
+          })
+        );
+        deliverablesWithAlerts.push(...batchResults);
+      }
 
       setDeliverables(deliverablesWithAlerts);
     } catch (err: any) {
