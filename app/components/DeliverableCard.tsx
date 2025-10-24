@@ -20,10 +20,6 @@ export default function DeliverableCard({ deliverable }: DeliverableCardProps) {
   const [isUpdating, setIsUpdating] = useState(false);
   const editSectionRef = useRef<HTMLDivElement>(null);
 
-  // Debug: Log alerts to console
-  console.log('DeliverableCard - Deliverable:', deliverable.name);
-  console.log('DeliverableCard - Alerts:', deliverable.alerts);
-
   // Scroll to edit section when editing mode is enabled
   useEffect(() => {
     if (isEditing && editSectionRef.current) {
