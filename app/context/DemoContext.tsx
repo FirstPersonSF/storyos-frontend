@@ -76,7 +76,7 @@ export function DemoProvider({ children }: { children: ReactNode }) {
   }
 
   async function createDeliverable(name: string, templateId: string, voiceId: string, instanceData: any) {
-    setLoading(true);
+    // Don't set global loading state - let the caller handle it
     setError(null);
 
     try {
@@ -100,8 +100,6 @@ export function DemoProvider({ children }: { children: ReactNode }) {
       const errorMessage = error.response?.data?.detail || error.message;
       setError(errorMessage);
       return { success: false, error: errorMessage };
-    } finally {
-      setLoading(false);
     }
   }
 
