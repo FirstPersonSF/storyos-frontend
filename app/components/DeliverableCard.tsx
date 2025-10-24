@@ -76,10 +76,10 @@ export default function DeliverableCard({ deliverable }: DeliverableCardProps) {
     : deliverable.rendered_content;
 
   // Parse transformation notes if available
-  const transformationNotes = deliverable.transformation_notes
-    ? (typeof deliverable.transformation_notes === 'string'
-      ? JSON.parse(deliverable.transformation_notes)
-      : deliverable.transformation_notes)
+  const transformationNotes = deliverable.metadata?.transformation_notes
+    ? (typeof deliverable.metadata.transformation_notes === 'string'
+      ? JSON.parse(deliverable.metadata.transformation_notes)
+      : deliverable.metadata.transformation_notes)
     : null;
 
   return (
@@ -189,86 +189,27 @@ export default function DeliverableCard({ deliverable }: DeliverableCardProps) {
                   </div>
                 )}
 
-                {/* Inline annotation tooltip (if transformation notes exist for this section) */}
-                {transformationNotes && transformationNotes[section] && (
-                  <div className="absolute hidden group-hover:block bg-[#E92076]/10 border-2 border-[#E92076] rounded-lg p-4 shadow-lg z-10 top-full mt-2 left-0 right-0">
-                    <p className="text-sm text-[#E92076] font-bold mb-2">
-                      🤖 Transformation Summary:
-                    </p>
-                    <p className="text-sm text-muted-foreground text-left">
-                      {transformationNotes[section].summary}
-                    </p>
-                  </div>
-                )}
               </div>
-
-              {/* Section transformation details */}
-              {transformationNotes && transformationNotes[section] && transformationNotes[section].changes && (
-                <details className="mt-3">
-                  <summary className="text-sm text-[#E92076] cursor-pointer hover:text-[#003A70] font-semibold">
-                    View {transformationNotes[section].changes.length} transformation(s)
-                  </summary>
-                  <ul className="mt-3 text-sm text-muted-foreground space-y-1.5 pl-6">
-                    {transformationNotes[section].changes.map((change: any, idx: number) => (
-                      <li key={idx}>
-                        • {change.type}: &quot;{change.from}&quot; → &quot;{change.to}&quot;
-                        {change.reason && <span className="text-[#E92076] italic"> ({change.reason})</span>}
-                      </li>
-                    ))}
-                  </ul>
-                </details>
-              )}
             </div>
           ))}
 
-          {/* Transformation Changelog (if LLM was used) */}
-          {transformationMethod === 'llm' && deliverable.transformation_metadata && (
-            <div className="border-t-2 border-gray-200 pt-6">
-              <button
-                onClick={() => setShowChangelog(!showChangelog)}
-                className="text-base font-bold text-[#E92076] hover:text-[#003A70] flex items-center gap-3"
-              >
-                {showChangelog ? '▼' : '▶'} Transformation Changelog
-                <span className="text-sm bg-[#E92076] text-white px-3 py-1 rounded-lg font-semibold">
-                  {deliverable.transformation_metadata.total_changes || 0} changes
-                </span>
-              </button>
-
-              {showChangelog && (
-                <div className="mt-4 bg-[#E92076]/10 border-2 border-[#E92076] rounded-lg p-4 space-y-3">
-                  <div className="text-sm text-foreground">
-                    <div><strong>Method:</strong> {deliverable.transformation_metadata.method}</div>
-                    {deliverable.transformation_metadata.model && (
-                      <div><strong>Model:</strong> {deliverable.transformation_metadata.model}</div>
-                    )}
-                    {deliverable.transformation_metadata.timestamp && (
-                      <div><strong>Timestamp:</strong> {new Date(deliverable.transformation_metadata.timestamp).toLocaleString()}</div>
-                    )}
-                  </div>
-
-                  {/* Detailed changelog by section */}
-                  {transformationNotes && (
-                    <div className="space-y-3 mt-4">
-                      {Object.entries(transformationNotes).map(([section, notes]: [string, any]) => (
-                        <div key={section} className="bg-white rounded-lg p-3">
-                          <p className="font-bold text-sm text-[#E92076]">{section}</p>
-                          <p className="text-sm text-muted-foreground mt-2">{notes.summary}</p>
-                          {notes.changes && notes.changes.length > 0 && (
-                            <ul className="text-sm text-muted-foreground mt-3 space-y-1.5">
-                              {notes.changes.map((change: any, idx: number) => (
-                                <li key={idx}>
-                                  • <strong>{change.type}:</strong> &quot;{change.from}&quot; → &quot;{change.to}&quot;
-                                  {change.reason && <span className="italic"> ({change.reason})</span>}
-                                </li>
-                              ))}
-                            </ul>
-                          )}
-                        </div>
-                      ))}
+          {/* Transformation Notes Section */}
+          {transformationNotes && Object.keys(transformationNotes).length > 0 && (
+            <div className="border-t-4 border-gray-300 pt-6 mt-8">
+              <h3 className="text-xl font-bold text-[#003A70] mb-4">🤖 Transformation Notes</h3>
+              <p className="text-sm text-muted-foreground mb-4">
+                AI-generated rationale explaining how the content was transformed to match the brand voice
+              </p>
+              <div className="space-y-4">
+                {Object.entries(transformationNotes).map(([section, notes]) => (
+                  <div key={section} className="bg-blue-50 border-2 border-blue-200 rounded-lg p-4">
+                    <h4 className="text-sm font-semibold text-blue-900 mb-2">{section}</h4>
+                    <div className="text-sm text-blue-800 whitespace-pre-wrap">
+                      {notes as string}
                     </div>
-                  )}
-                </div>
-              )}
+                  </div>
+                ))}
+              </div>
             </div>
           )}
 
