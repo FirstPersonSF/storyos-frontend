@@ -31,6 +31,7 @@ export default function StoryModelSelector({
   const [instanceData, setInstanceData] = useState(currentInstanceData || {});
   const [instanceFields, setInstanceFields] = useState<any[]>([]);
   const [loadingFields, setLoadingFields] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
   const confirmSectionRef = useRef<HTMLDivElement>(null);
 
   // Get template for selected story model
@@ -55,8 +56,13 @@ export default function StoryModelSelector({
 
     // If only voice changed, handle it immediately
     if (voiceChanged && !modelChanged) {
-      await onVoiceChange(selectedVoiceId);
-      // Don't call onCancel() - let parent component handle UI state
+      setIsProcessing(true);
+      try {
+        await onVoiceChange(selectedVoiceId);
+        // Don't call onCancel() - let parent component handle UI state
+      } finally {
+        setIsProcessing(false);
+      }
       return;
     }
 
@@ -88,18 +94,23 @@ export default function StoryModelSelector({
     const modelChanged = selectedModelId !== currentModelId;
     const voiceChanged = selectedVoiceId !== currentVoiceId;
 
-    // Handle model change first if needed
-    if (modelChanged) {
-      await onModelChange(selectedModelId, instanceData);
-    }
+    setIsProcessing(true);
+    try {
+      // Handle model change first if needed
+      if (modelChanged) {
+        await onModelChange(selectedModelId, instanceData);
+      }
 
-    // Handle voice change if needed and model didn't change
-    // (if model changed, voice stays the same)
-    if (voiceChanged && !modelChanged) {
-      await onVoiceChange(selectedVoiceId);
-    }
+      // Handle voice change if needed and model didn't change
+      // (if model changed, voice stays the same)
+      if (voiceChanged && !modelChanged) {
+        await onVoiceChange(selectedVoiceId);
+      }
 
-    setShowConfirm(false);
+      setShowConfirm(false);
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   const handleInstanceFieldChange = (fieldName: string, value: any) => {
@@ -165,13 +176,25 @@ export default function StoryModelSelector({
           <div className="flex gap-3">
             <button
               onClick={handleSave}
-              className="flex-1 bg-[#003A70] text-white px-6 py-3 rounded-lg hover:bg-[#0052A3] font-semibold text-base transition-colors"
+              disabled={isProcessing}
+              className="flex-1 bg-[#003A70] text-white px-6 py-3 rounded-lg hover:bg-[#0052A3] font-semibold text-base transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
             >
-              Continue
+              {isProcessing ? (
+                <span className="flex items-center justify-center gap-2">
+                  <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  Processing...
+                </span>
+              ) : (
+                'Continue'
+              )}
             </button>
             <button
               onClick={onCancel}
-              className="px-6 py-3 border-2 border-gray-300 rounded-lg hover:bg-gray-50 font-semibold text-base transition-colors"
+              disabled={isProcessing}
+              className="px-6 py-3 border-2 border-gray-300 rounded-lg hover:bg-gray-50 font-semibold text-base transition-colors disabled:bg-gray-200 disabled:cursor-not-allowed"
             >
               Cancel
             </button>
@@ -223,16 +246,28 @@ export default function StoryModelSelector({
           <div className="flex gap-3">
             <button
               onClick={handleInstanceFieldsComplete}
-              className="flex-1 bg-[#003A70] text-white px-6 py-3 rounded-lg hover:bg-[#0052A3] font-semibold text-base transition-colors"
+              disabled={isProcessing}
+              className="flex-1 bg-[#003A70] text-white px-6 py-3 rounded-lg hover:bg-[#0052A3] font-semibold text-base transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
             >
-              Continue
+              {isProcessing ? (
+                <span className="flex items-center justify-center gap-2">
+                  <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  Processing...
+                </span>
+              ) : (
+                'Continue'
+              )}
             </button>
             <button
               onClick={() => {
                 setShowInstanceFields(false);
                 setInstanceData(currentInstanceData || {});
               }}
-              className="px-6 py-3 border-2 border-gray-300 rounded-lg hover:bg-gray-50 font-semibold text-base transition-colors"
+              disabled={isProcessing}
+              className="px-6 py-3 border-2 border-gray-300 rounded-lg hover:bg-gray-50 font-semibold text-base transition-colors disabled:bg-gray-200 disabled:cursor-not-allowed"
             >
               Back
             </button>
@@ -246,9 +281,20 @@ export default function StoryModelSelector({
           <div className="flex gap-3">
             <button
               onClick={handleConfirm}
-              className="flex-1 bg-yellow-600 text-white px-6 py-3 rounded-lg hover:bg-yellow-700 font-semibold text-base transition-colors"
+              disabled={isProcessing}
+              className="flex-1 bg-yellow-600 text-white px-6 py-3 rounded-lg hover:bg-yellow-700 font-semibold text-base transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed"
             >
-              Confirm Change
+              {isProcessing ? (
+                <span className="flex items-center justify-center gap-2">
+                  <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  Confirming...
+                </span>
+              ) : (
+                'Confirm Change'
+              )}
             </button>
             <button
               onClick={() => {
@@ -257,7 +303,8 @@ export default function StoryModelSelector({
                   setShowInstanceFields(true);
                 }
               }}
-              className="px-6 py-3 border-2 border-gray-300 rounded-lg hover:bg-gray-50 font-semibold text-base transition-colors"
+              disabled={isProcessing}
+              className="px-6 py-3 border-2 border-gray-300 rounded-lg hover:bg-gray-50 font-semibold text-base transition-colors disabled:bg-gray-200 disabled:cursor-not-allowed"
             >
               Back
             </button>
