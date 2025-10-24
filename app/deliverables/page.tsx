@@ -486,6 +486,26 @@ export default function DeliverablesPage() {
                   No rendered content available
                 </div>
               )}
+
+              {/* Transformation Notes Section */}
+              {viewingContent.metadata?.transformation_notes && Object.keys(viewingContent.metadata.transformation_notes).length > 0 && (
+                <div className="border-t-4 border-gray-300 pt-6 mt-8">
+                  <h3 className="text-xl font-bold text-[#003A70] mb-4">🤖 Transformation Notes</h3>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    AI-generated rationale explaining how the content was transformed to match the brand voice
+                  </p>
+                  <div className="space-y-4">
+                    {Object.entries(viewingContent.metadata.transformation_notes).map(([section, notes]) => (
+                      <div key={section} className="bg-blue-50 border-2 border-blue-200 rounded-lg p-4">
+                        <h4 className="text-sm font-semibold text-blue-900 mb-2">{section}</h4>
+                        <div className="text-sm text-blue-800 whitespace-pre-wrap">
+                          {notes as string}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
 
             <div className="sticky bottom-0 bg-white border-t-2 border-gray-200 p-8 flex justify-end">
