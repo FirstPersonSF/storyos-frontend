@@ -106,7 +106,7 @@ export function DemoProvider({ children }: { children: ReactNode }) {
   }
 
   async function refreshDeliverable(deliverableId: string) {
-    setLoading(true);
+    // Don't set global loading state - use card-level loading instead
     try {
       await deliverablesAPI.refreshDeliverable(deliverableId);
       const updated = await deliverablesAPI.getDeliverableWithAlerts(deliverableId);
@@ -117,8 +117,6 @@ export function DemoProvider({ children }: { children: ReactNode }) {
       return { success: true };
     } catch (error: any) {
       return { success: false, error: error.message };
-    } finally {
-      setLoading(false);
     }
   }
 
