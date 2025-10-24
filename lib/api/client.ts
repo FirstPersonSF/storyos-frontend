@@ -57,6 +57,7 @@ export const templatesAPI = {
 // Deliverables API
 export const deliverablesAPI = {
   getDeliverables: (params?: any) => apiClient.get('/deliverables', { params }),
+  getDeliverablesWithAlerts: () => apiClient.get('/deliverables/with-alerts'),
   getDeliverable: (id: string) => apiClient.get(`/deliverables/${id}`),
   getDeliverableWithAlerts: (id: string) => apiClient.get(`/deliverables/${id}/with-alerts`),
   getDeliverableVersions: (id: string) => apiClient.get(`/deliverables/${id}/versions`),
