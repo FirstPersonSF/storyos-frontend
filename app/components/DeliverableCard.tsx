@@ -27,7 +27,9 @@ export default function DeliverableCard({ deliverable }: DeliverableCardProps) {
   }, [isEditing]);
 
   // Get voice styling - using v0 color palette
-  const isCorporate = deliverable.voice_id === '00a2f89d-0b2a-465c-b85a-29fbc4cc1b7e';
+  // Find the voice by ID to check its name
+  const deliverableVoice = voices.find(v => v.id === deliverable.voice_id);
+  const isCorporate = deliverableVoice?.name?.toLowerCase().includes('corporate') || false;
   const voiceStyles = isCorporate
     ? {
         border: 'border-[#003A70]/20',
