@@ -37,7 +37,7 @@ export default function ProvenanceViewer({ deliverable }: ProvenanceViewerProps)
   // Helper to get element name
   const getElementName = (elementId: string) => {
     const element = elements.find(e => e.id === elementId);
-    return element ? element.name : 'Unknown';
+    return element ? element.name : 'Unknown (superseded)';
   };
 
   // Helper to get story model name
