@@ -92,10 +92,12 @@ export default function DeliverablesPage() {
   const handleRefresh = async (deliverableId: string) => {
     try {
       await deliverablesAPI.refreshDeliverable(deliverableId);
+      alert('Deliverable refreshed successfully with latest approved versions!');
       loadDeliverables();
       loadDeliverableWithAlerts(deliverableId);
     } catch (err: any) {
-      alert('Error refreshing deliverable: ' + err.message);
+      const errorMessage = err.response?.data?.detail || err.message || 'Unknown error occurred';
+      alert('Error refreshing deliverable: ' + errorMessage);
     }
   };
 
@@ -350,13 +352,19 @@ export default function DeliverablesPage() {
                                           </div>
                                         ))}
                                       </div>
-                                      <Button
-                                        onClick={() => handleRefresh(deliverable.id)}
-                                        className="bg-blue-600 hover:bg-blue-700 text-white font-semibold"
-                                      >
-                                        <RefreshCw className="mr-2 h-4 w-4" />
-                                        Refresh Deliverable
-                                      </Button>
+                                      {pendingAlerts.length > 0 ? (
+                                        <p className="text-sm text-blue-700 italic">
+                                          ⚠️ Refresh disabled: Approve all draft updates first before refreshing.
+                                        </p>
+                                      ) : (
+                                        <Button
+                                          onClick={() => handleRefresh(deliverable.id)}
+                                          className="bg-blue-600 hover:bg-blue-700 text-white font-semibold"
+                                        >
+                                          <RefreshCw className="mr-2 h-4 w-4" />
+                                          Refresh Deliverable
+                                        </Button>
+                                      )}
                                     </div>
                                   )}
                                 </>
