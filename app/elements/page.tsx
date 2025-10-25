@@ -17,6 +17,7 @@ export default function ElementsPage() {
   const [editingElement, setEditingElement] = useState<any>(null);
   const [expandedElementName, setExpandedElementName] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<string>('active');
+  const [viewingElement, setViewingElement] = useState<any>(null);
   const [formData, setFormData] = useState({
     layer_id: '',
     name: '',
@@ -112,6 +113,20 @@ export default function ElementsPage() {
     } catch (err: any) {
       alert('Error deleting element: ' + err.message);
     }
+  };
+
+  const handleViewContent = (element: any) => {
+    // Find the previous approved version for comparison (if this is a draft)
+    let previousApproved = null;
+    if (element.status === 'draft') {
+      const allVersions = elements.filter(e => e.name === element.name);
+      previousApproved = allVersions.find(e => e.status === 'approved');
+    }
+
+    setViewingElement({
+      current: element,
+      previousApproved: previousApproved
+    });
   };
 
   // Group elements by name and get latest version of each
@@ -273,9 +288,19 @@ export default function ElementsPage() {
                         )}
                       </CardHeader>
                       <CardContent className="pt-6">
-                        <p className="mb-6 text-base leading-relaxed text-foreground line-clamp-4">
+                        <p className="mb-4 text-base leading-relaxed text-foreground line-clamp-4">
                           {element.content}
                         </p>
+                        <Button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleViewContent(element);
+                          }}
+                          variant="outline"
+                          className="w-full mb-3 border-2 border-gray-300 hover:bg-gray-50 font-semibold"
+                        >
+                          View Full Content
+                        </Button>
                         <div className="flex gap-3" onClick={(e) => e.stopPropagation()}>
                           {element.status === 'draft' ? (
                             <>
@@ -361,7 +386,15 @@ export default function ElementsPage() {
                                 <p className="text-sm leading-relaxed text-muted-foreground line-clamp-3">
                                   {version.content}
                                 </p>
-                                <div className="mt-4 flex gap-2">
+                                <Button
+                                  onClick={() => handleViewContent(version)}
+                                  variant="outline"
+                                  size="sm"
+                                  className="w-full mt-3 mb-2 border border-gray-300 hover:bg-gray-50 text-sm font-semibold"
+                                >
+                                  View Full Content
+                                </Button>
+                                <div className="mt-2 flex gap-2">
                                   {version.status === 'draft' ? (
                                     <>
                                       <Button
@@ -499,6 +532,98 @@ export default function ElementsPage() {
                   </Button>
                 </div>
               </form>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* View Content Modal */}
+      {viewingElement && (
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-6">
+          <div className="bg-white rounded-lg shadow-2xl max-w-6xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-8">
+              <div className="flex items-center justify-between mb-6">
+                <div>
+                  <h2 className="text-3xl font-bold text-foreground">{viewingElement.current.name}</h2>
+                  <div className="flex items-center gap-3 mt-2">
+                    <Badge
+                      className={
+                        viewingElement.current.status === 'approved'
+                          ? 'bg-[#003A70] hover:bg-[#0052A3] text-white'
+                          : viewingElement.current.status === 'draft'
+                          ? 'bg-yellow-600 hover:bg-yellow-700 text-white'
+                          : 'bg-gray-500 hover:bg-gray-600 text-white'
+                      }
+                    >
+                      {viewingElement.current.status}
+                    </Badge>
+                    <span className="text-sm text-muted-foreground">Version {viewingElement.current.version}</span>
+                    <span className="text-sm text-muted-foreground">
+                      {new Date(viewingElement.current.created_at).toLocaleDateString()}
+                    </span>
+                  </div>
+                </div>
+                <Button
+                  onClick={() => setViewingElement(null)}
+                  variant="outline"
+                  className="border-2"
+                >
+                  Close
+                </Button>
+              </div>
+
+              {viewingElement.previousApproved ? (
+                /* Side-by-side comparison for drafts */
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {/* Previous Approved Version */}
+                  <div className="border-2 border-gray-300 rounded-lg p-4">
+                    <h3 className="text-xl font-bold text-center mb-2 text-gray-700">
+                      Previous Approved (v{viewingElement.previousApproved.version})
+                    </h3>
+                    <p className="text-sm text-center text-muted-foreground mb-4">
+                      {new Date(viewingElement.previousApproved.created_at).toLocaleDateString()}
+                    </p>
+                    <div className="prose prose-sm max-w-none">
+                      <p className="whitespace-pre-wrap text-gray-700">
+                        {viewingElement.previousApproved.content}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Current Draft Version */}
+                  <div className="border-2 border-yellow-500 rounded-lg p-4 bg-yellow-50">
+                    <h3 className="text-xl font-bold text-center mb-2 text-yellow-700">
+                      Current Draft (v{viewingElement.current.version})
+                    </h3>
+                    <p className="text-sm text-center text-yellow-600 mb-4">
+                      {new Date(viewingElement.current.created_at).toLocaleDateString()}
+                    </p>
+                    <div className="prose prose-sm max-w-none">
+                      <p className="whitespace-pre-wrap text-gray-900">
+                        {viewingElement.current.content}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                /* Single column view for approved/superseded */
+                <div className="border-2 border-gray-300 rounded-lg p-6">
+                  <div className="prose prose-base max-w-none">
+                    <p className="whitespace-pre-wrap text-gray-900 leading-relaxed">
+                      {viewingElement.current.content}
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {viewingElement.current.metadata && Object.keys(viewingElement.current.metadata).length > 0 && (
+                <div className="mt-6 border-t-2 border-gray-200 pt-6">
+                  <h3 className="text-lg font-bold text-foreground mb-3">Metadata</h3>
+                  <pre className="bg-gray-50 p-4 rounded-lg text-sm overflow-x-auto">
+                    {JSON.stringify(viewingElement.current.metadata, null, 2)}
+                  </pre>
+                </div>
+              )}
             </div>
           </div>
         </div>
