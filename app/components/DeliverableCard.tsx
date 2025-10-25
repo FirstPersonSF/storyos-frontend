@@ -58,6 +58,10 @@ export default function DeliverableCard({ deliverable }: DeliverableCardProps) {
     setIsRefreshing(true);
     try {
       await refreshDeliverable(deliverable.id);
+      alert('Deliverable refreshed successfully with latest approved versions!');
+    } catch (err: any) {
+      const errorMessage = err.response?.data?.detail || err.message || 'Unknown error occurred';
+      alert('Error refreshing deliverable: ' + errorMessage);
     } finally {
       setIsRefreshing(false);
     }
@@ -117,6 +121,9 @@ export default function DeliverableCard({ deliverable }: DeliverableCardProps) {
   const validationLog = deliverable.validation_log || [];
   const failedValidations = validationLog.filter((v: any) => !v.passed);
   const passedValidations = validationLog.filter((v: any) => v.passed);
+
+  // Check for pending draft alerts
+  const hasPendingDrafts = deliverable.alerts?.some((a: any) => a.status === 'update_pending') ?? false;
 
   return (
     <div className={`bg-white rounded-lg shadow-lg border-2 ${voiceStyles.border} overflow-hidden relative ${isRefreshing ? 'opacity-60 pointer-events-none' : ''}`}>
@@ -179,7 +186,13 @@ export default function DeliverableCard({ deliverable }: DeliverableCardProps) {
             </button>
             <button
               onClick={handleRefresh}
-              className="text-sm px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 font-semibold transition-colors"
+              disabled={hasPendingDrafts}
+              title={hasPendingDrafts ? 'Refresh disabled: Approve draft updates first' : 'Refresh with latest approved versions'}
+              className={`text-sm px-4 py-2 rounded-lg font-semibold transition-colors ${
+                hasPendingDrafts
+                  ? 'bg-gray-400 text-gray-200 cursor-not-allowed'
+                  : 'bg-green-600 text-white hover:bg-green-700'
+              }`}
             >
               Refresh
             </button>
@@ -202,20 +215,54 @@ export default function DeliverableCard({ deliverable }: DeliverableCardProps) {
         )}
 
         {/* Impact Alerts */}
-        {deliverable.alerts && deliverable.alerts.length > 0 && (
-          <div className="mt-4 p-4 bg-yellow-50 border-2 border-yellow-300 rounded-lg">
-            <p className="text-sm font-bold text-yellow-800 mb-2">
-              ⚠️ Impact Alerts ({deliverable.alerts.length})
-            </p>
-            <ul className="text-sm text-yellow-700 space-y-1.5">
-              {deliverable.alerts.map((alert: any) => (
-                <li key={alert.element_id}>
-                  • {alert.element_name}: v{alert.old_version} → v{alert.new_version} ({alert.status})
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
+        {deliverable.alerts && deliverable.alerts.length > 0 && (() => {
+          const pendingAlerts = deliverable.alerts.filter((a: any) => a.status === 'update_pending');
+          const availableAlerts = deliverable.alerts.filter((a: any) => a.status === 'update_available');
+
+          return (
+            <div className="mt-4 space-y-3">
+              {/* Pending Alerts (Draft) - Yellow Warning */}
+              {pendingAlerts.length > 0 && (
+                <div className="p-4 bg-yellow-50 border-2 border-yellow-400 rounded-lg">
+                  <p className="text-sm font-bold text-yellow-900 mb-2">
+                    ⚠️ {pendingAlerts.length} Draft Update{pendingAlerts.length !== 1 ? 's' : ''} Pending
+                  </p>
+                  <ul className="text-sm text-yellow-800 space-y-1.5">
+                    {pendingAlerts.map((alert: any) => (
+                      <li key={alert.element_id}>
+                        • {alert.element_name}: {alert.message}
+                      </li>
+                    ))}
+                  </ul>
+                  <p className="text-xs text-yellow-700 mt-2">
+                    Approve draft elements before refreshing this deliverable.
+                  </p>
+                </div>
+              )}
+
+              {/* Available Alerts (Approved) - Blue Info */}
+              {availableAlerts.length > 0 && (
+                <div className="p-4 bg-blue-50 border-2 border-blue-400 rounded-lg">
+                  <p className="text-sm font-bold text-blue-900 mb-2">
+                    ℹ️ {availableAlerts.length} Update{availableAlerts.length !== 1 ? 's' : ''} Available
+                  </p>
+                  <ul className="text-sm text-blue-800 space-y-1.5">
+                    {availableAlerts.map((alert: any) => (
+                      <li key={alert.element_id}>
+                        • {alert.element_name}: {alert.message}
+                      </li>
+                    ))}
+                  </ul>
+                  {pendingAlerts.length > 0 && (
+                    <p className="text-xs text-blue-700 mt-2 italic">
+                      ⚠️ Refresh disabled: Approve all draft updates first.
+                    </p>
+                  )}
+                </div>
+              )}
+            </div>
+          );
+        })()}
       </div>
 
       {/* Expanded Content */}
