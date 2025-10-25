@@ -21,6 +21,7 @@ export const unfAPI = {
   getElement: (id: string) => apiClient.get(`/unf/elements/${id}`),
   createElement: (data: any) => apiClient.post('/unf/elements', data),
   updateElement: (id: string, data: any) => apiClient.put(`/unf/elements/${id}`, data),
+  deleteElement: (id: string) => apiClient.delete(`/unf/elements/${id}`),
   approveElement: (id: string) => apiClient.post(`/unf/elements/${id}/approve`),
   getElementVersions: (id: string) => apiClient.get(`/unf/elements/${id}/versions`),
   getLatestApprovedElements: (layerId?: string) =>
@@ -65,6 +66,7 @@ export const deliverablesAPI = {
   updateDeliverable: (id: string, data: any) => apiClient.put(`/deliverables/${id}`, data),
   validateDeliverable: (id: string) => apiClient.post(`/deliverables/${id}/validate`),
   refreshDeliverable: (id: string) => apiClient.post(`/deliverables/${id}/refresh`),
+  previewDeliverable: (id: string) => apiClient.post(`/deliverables/${id}/preview`),
 };
 
 export default apiClient;

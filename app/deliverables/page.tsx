@@ -20,6 +20,9 @@ export default function DeliverablesPage() {
   const [viewingContent, setViewingContent] = useState<any>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [showPreviewModal, setShowPreviewModal] = useState(false);
+  const [previewData, setPreviewData] = useState<any>(null);
+  const [isLoadingPreview, setIsLoadingPreview] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     template_id: '',
@@ -83,6 +86,29 @@ export default function DeliverablesPage() {
       setAlerts(response.data.alerts || []);
     } catch (err) {
       console.error('Error loading alerts:', err);
+    }
+  };
+
+  const handleRefresh = async (deliverableId: string) => {
+    try {
+      await deliverablesAPI.refreshDeliverable(deliverableId);
+      loadDeliverables();
+      loadDeliverableWithAlerts(deliverableId);
+    } catch (err: any) {
+      alert('Error refreshing deliverable: ' + err.message);
+    }
+  };
+
+  const handlePreview = async (deliverableId: string) => {
+    setIsLoadingPreview(true);
+    try {
+      const response = await deliverablesAPI.previewDeliverable(deliverableId);
+      setPreviewData(response.data);
+      setShowPreviewModal(true);
+    } catch (err: any) {
+      alert('Error loading preview: ' + err.message);
+    } finally {
+      setIsLoadingPreview(false);
     }
   };
 
@@ -270,20 +296,72 @@ export default function DeliverablesPage() {
                     {selectedDeliverable?.id === deliverable.id && (
                       <div className="mb-6">
                         {alerts && alerts.length > 0 ? (
-                          <div className="rounded-lg border-2 border-yellow-400 bg-yellow-50 p-6">
-                            <div className="mb-4 flex items-center gap-3">
-                              <AlertTriangle className="h-5 w-5 text-yellow-600" />
-                              <h4 className="text-lg font-bold text-yellow-900">
-                                {alerts.length} Update{alerts.length !== 1 ? 's' : ''} Available
-                              </h4>
-                            </div>
-                            <div className="space-y-2">
-                              {alerts.map((alert: any, idx: number) => (
-                                <div key={idx} className="text-sm text-yellow-800">
-                                  <strong>{alert.element_name}:</strong> v{alert.old_version} → v{alert.new_version}
-                                </div>
-                              ))}
-                            </div>
+                          <div className="space-y-3">
+                            {(() => {
+                              const pendingAlerts = alerts.filter((a: any) => a.status === 'update_pending');
+                              const availableAlerts = alerts.filter((a: any) => a.status === 'update_available');
+
+                              return (
+                                <>
+                                  {/* Pending Updates (Draft) - Yellow Warning */}
+                                  {pendingAlerts.length > 0 && (
+                                    <div className="rounded-lg border-2 border-yellow-400 bg-yellow-50 p-6">
+                                      <div className="mb-4 flex items-center gap-3">
+                                        <AlertTriangle className="h-5 w-5 text-yellow-600" />
+                                        <h4 className="text-lg font-bold text-yellow-900">
+                                          ⚠️ {pendingAlerts.length} Draft Update{pendingAlerts.length !== 1 ? 's' : ''} Pending
+                                        </h4>
+                                      </div>
+                                      <div className="space-y-2 mb-4">
+                                        {pendingAlerts.map((alert: any, idx: number) => (
+                                          <div key={idx} className="text-sm text-yellow-800">
+                                            <strong>{alert.element_name}:</strong> {alert.message}
+                                          </div>
+                                        ))}
+                                      </div>
+                                      <p className="text-xs text-yellow-700 mb-3">
+                                        Approve draft elements before refreshing this deliverable.
+                                      </p>
+                                      <Button
+                                        onClick={() => handlePreview(deliverable.id)}
+                                        disabled={isLoadingPreview}
+                                        className="bg-purple-600 hover:bg-purple-700 text-white font-semibold"
+                                      >
+                                        {isLoadingPreview ? 'Loading...' : 'Preview with Drafts'}
+                                      </Button>
+                                    </div>
+                                  )}
+
+                                  {/* Available Updates (Approved) - Blue Info */}
+                                  {availableAlerts.length > 0 && (
+                                    <div className="rounded-lg border-2 border-blue-400 bg-blue-50 p-6">
+                                      <div className="mb-4 flex items-center gap-3">
+                                        <svg className="h-5 w-5 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                                          <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                                        </svg>
+                                        <h4 className="text-lg font-bold text-blue-900">
+                                          ℹ️ {availableAlerts.length} Update{availableAlerts.length !== 1 ? 's' : ''} Available
+                                        </h4>
+                                      </div>
+                                      <div className="space-y-2 mb-4">
+                                        {availableAlerts.map((alert: any, idx: number) => (
+                                          <div key={idx} className="text-sm text-blue-800">
+                                            <strong>{alert.element_name}:</strong> {alert.message}
+                                          </div>
+                                        ))}
+                                      </div>
+                                      <Button
+                                        onClick={() => handleRefresh(deliverable.id)}
+                                        className="bg-blue-600 hover:bg-blue-700 text-white font-semibold"
+                                      >
+                                        <RefreshCw className="mr-2 h-4 w-4" />
+                                        Refresh Deliverable
+                                      </Button>
+                                    </div>
+                                  )}
+                                </>
+                              );
+                            })()}
                           </div>
                         ) : (
                           <div className="rounded-lg border-2 border-green-400 bg-green-50 p-6">
@@ -516,6 +594,73 @@ export default function DeliverablesPage() {
               >
                 Close
               </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Preview Modal */}
+      {showPreviewModal && previewData && (
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-6">
+          <div className="bg-white rounded-lg shadow-2xl max-w-6xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-8">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-3xl font-bold text-foreground">Preview with Draft Content</h2>
+                <Button
+                  onClick={() => setShowPreviewModal(false)}
+                  variant="outline"
+                  className="border-2"
+                >
+                  Close
+                </Button>
+              </div>
+
+              {previewData.draft_elements_used && previewData.draft_elements_used.length > 0 && (
+                <div className="mb-6 p-4 bg-purple-50 border-2 border-purple-200 rounded-lg">
+                  <p className="text-sm font-bold text-purple-900 mb-2">
+                    Draft elements being previewed:
+                  </p>
+                  <div className="text-sm text-purple-800">
+                    {previewData.draft_elements_used.join(', ')}
+                  </div>
+                </div>
+              )}
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Current Content */}
+                <div className="border-2 border-gray-300 rounded-lg p-4">
+                  <h3 className="text-xl font-bold text-center mb-4 text-gray-700">Current</h3>
+                  <div className="space-y-4">
+                    {Object.entries(previewData.original_rendered_content || {}).map(([section, content]) => (
+                      <div key={section} className="border-b pb-4 last:border-b-0">
+                        <h4 className="text-sm font-semibold text-[#003A70] mb-2">{section}</h4>
+                        <ReactMarkdown className="text-sm text-gray-700 prose prose-sm max-w-none">
+                          {content as string}
+                        </ReactMarkdown>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Preview with Drafts */}
+                <div className="border-2 border-purple-500 rounded-lg p-4 bg-purple-50">
+                  <h3 className="text-xl font-bold text-center mb-4 text-purple-700">With Drafts</h3>
+                  <div className="space-y-4">
+                    {Object.entries(previewData.preview_rendered_content || {}).map(([section, content]) => (
+                      <div key={section} className="border-b border-purple-200 pb-4 last:border-b-0">
+                        <h4 className="text-sm font-semibold text-purple-700 mb-2">{section}</h4>
+                        <ReactMarkdown className="text-sm text-gray-900 prose prose-sm max-w-none">
+                          {content as string}
+                        </ReactMarkdown>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-6 text-center text-sm text-gray-600">
+                {previewData.preview_note}
+              </div>
             </div>
           </div>
         </div>

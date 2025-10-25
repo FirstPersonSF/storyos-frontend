@@ -16,6 +16,7 @@ export default function ElementsPage() {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [editingElement, setEditingElement] = useState<any>(null);
   const [expandedElementName, setExpandedElementName] = useState<string | null>(null);
+  const [statusFilter, setStatusFilter] = useState<string>('active');
   const [formData, setFormData] = useState({
     layer_id: '',
     name: '',
@@ -101,6 +102,18 @@ export default function ElementsPage() {
     }
   };
 
+  const handleDelete = async (elementId: string, elementName: string) => {
+    if (!confirm(`Are you sure you want to delete the draft element "${elementName}"?`)) {
+      return;
+    }
+    try {
+      await unfAPI.deleteElement(elementId);
+      loadElements();
+    } catch (err: any) {
+      alert('Error deleting element: ' + err.message);
+    }
+  };
+
   // Group elements by name and get latest version of each
   const groupedElements = elements.reduce((acc: any, element: any) => {
     if (!acc[element.name]) {
@@ -116,12 +129,29 @@ export default function ElementsPage() {
   });
 
   // Get unique element names with their latest version
-  const uniqueElements = Object.keys(groupedElements).map(name => ({
+  const allUniqueElements = Object.keys(groupedElements).map(name => ({
     name,
     latestVersion: groupedElements[name][0],
     allVersions: groupedElements[name],
     versionCount: groupedElements[name].length
   }));
+
+  // Apply status filter
+  const uniqueElements = allUniqueElements.filter(elementGroup => {
+    const latestStatus = elementGroup.latestVersion.status;
+    switch (statusFilter) {
+      case 'active':
+        return latestStatus === 'draft' || latestStatus === 'approved';
+      case 'draft':
+        return latestStatus === 'draft';
+      case 'approved':
+        return latestStatus === 'approved';
+      case 'all':
+        return true;
+      default:
+        return true;
+    }
+  });
 
   if (loading) {
     return (
@@ -166,7 +196,7 @@ export default function ElementsPage() {
         {/* Page Header */}
         <section className="border-b border-border bg-white py-8">
           <div className="mx-auto max-w-7xl px-6 lg:px-8">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between mb-4">
               <div>
                 <h2 className="text-4xl font-bold tracking-tight text-foreground">UNF Elements</h2>
                 <p className="mt-2 text-lg text-muted-foreground">{uniqueElements.length} unique elements ({elements.length} total versions)</p>
@@ -178,6 +208,19 @@ export default function ElementsPage() {
                 <Plus className="mr-2 h-4 w-4" />
                 Create Element
               </Button>
+            </div>
+            <div className="flex items-center gap-3">
+              <label className="text-sm font-semibold text-foreground">Filter by Status:</label>
+              <select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+                className="px-4 py-2 border-2 border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#003A70] focus:border-[#003A70]"
+              >
+                <option value="active">Active (Draft + Approved)</option>
+                <option value="draft">Draft Only</option>
+                <option value="approved">Approved Only</option>
+                <option value="all">All (Including Superseded)</option>
+              </select>
             </div>
           </div>
         </section>
@@ -234,19 +277,44 @@ export default function ElementsPage() {
                           {element.content}
                         </p>
                         <div className="flex gap-3" onClick={(e) => e.stopPropagation()}>
-                          <Button
-                            onClick={() => handleEdit(element)}
-                            variant="outline"
-                            className="flex-1 border-2 border-[#003A70]/20 hover:bg-[#003A70]/5 font-semibold"
-                          >
-                            Edit (New Version)
-                          </Button>
-                          {element.status === 'draft' && (
+                          {element.status === 'draft' ? (
+                            <>
+                              <Button
+                                onClick={() => handleEdit(element)}
+                                variant="outline"
+                                className="flex-1 border-2 border-[#003A70]/20 hover:bg-[#003A70]/5 font-semibold"
+                              >
+                                Edit
+                              </Button>
+                              <Button
+                                onClick={() => handleApprove(element.id)}
+                                className="flex-1 bg-green-600 hover:bg-green-700 text-white font-semibold"
+                              >
+                                Approve
+                              </Button>
+                              <Button
+                                onClick={() => handleDelete(element.id, element.name)}
+                                variant="outline"
+                                className="flex-1 border-2 border-red-500/50 hover:bg-red-50 text-red-600 font-semibold"
+                              >
+                                Delete
+                              </Button>
+                            </>
+                          ) : element.status === 'approved' ? (
                             <Button
-                              onClick={() => handleApprove(element.id)}
-                              className="flex-1 bg-green-600 hover:bg-green-700 text-white font-semibold"
+                              onClick={() => handleEdit(element)}
+                              variant="outline"
+                              className="flex-1 border-2 border-[#003A70]/20 hover:bg-[#003A70]/5 font-semibold"
                             >
-                              Approve
+                              Create New Version
+                            </Button>
+                          ) : (
+                            <Button
+                              variant="outline"
+                              disabled
+                              className="flex-1 border-2 border-gray-300 text-gray-400 cursor-not-allowed"
+                            >
+                              Superseded (View Only)
                             </Button>
                           )}
                         </div>
@@ -294,22 +362,43 @@ export default function ElementsPage() {
                                   {version.content}
                                 </p>
                                 <div className="mt-4 flex gap-2">
-                                  <Button
-                                    onClick={() => handleEdit(version)}
-                                    variant="outline"
-                                    size="sm"
-                                    className="border border-[#003A70]/20 hover:bg-[#003A70]/5 text-sm font-semibold"
-                                  >
-                                    Edit (New Version)
-                                  </Button>
-                                  {version.status === 'draft' && (
+                                  {version.status === 'draft' ? (
+                                    <>
+                                      <Button
+                                        onClick={() => handleEdit(version)}
+                                        variant="outline"
+                                        size="sm"
+                                        className="border border-[#003A70]/20 hover:bg-[#003A70]/5 text-sm font-semibold"
+                                      >
+                                        Edit
+                                      </Button>
+                                      <Button
+                                        onClick={() => handleApprove(version.id)}
+                                        size="sm"
+                                        className="bg-green-600 hover:bg-green-700 text-white text-sm font-semibold"
+                                      >
+                                        Approve
+                                      </Button>
+                                      <Button
+                                        onClick={() => handleDelete(version.id, version.name)}
+                                        variant="outline"
+                                        size="sm"
+                                        className="border border-red-500/50 hover:bg-red-50 text-red-600 text-sm font-semibold"
+                                      >
+                                        Delete
+                                      </Button>
+                                    </>
+                                  ) : version.status === 'approved' ? (
                                     <Button
-                                      onClick={() => handleApprove(version.id)}
+                                      onClick={() => handleEdit(version)}
+                                      variant="outline"
                                       size="sm"
-                                      className="bg-green-600 hover:bg-green-700 text-white text-sm font-semibold"
+                                      className="border border-[#003A70]/20 hover:bg-[#003A70]/5 text-sm font-semibold"
                                     >
-                                      Approve
+                                      Create New Version
                                     </Button>
+                                  ) : (
+                                    <span className="text-xs text-gray-500">Superseded (View Only)</span>
                                   )}
                                 </div>
                               </CardContent>
